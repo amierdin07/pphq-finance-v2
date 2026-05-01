@@ -251,7 +251,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         <style>
             body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;line-height:1.5}
             .header-bar{background:#10b981;color:#fff;padding:25px;margin:-40px -40px 30px -40px;display:flex;align-items:center;justify-content:center;gap:20px}
-            .header-bar img{width:60px;height:60px;object-fit:contain;background:white;border-radius:12px;padding:5px}
+            .header-bar img{width:60px;height:60px;object-fit:contain}
             .header-text{text-align:left}
             h1{font-size:22px;margin:0;letter-spacing:1px}
             .branch-name{font-size:14px;font-weight:700;margin-top:2px;opacity:0.9}
@@ -266,7 +266,14 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             .sum-row{display:flex;justify-content:space-between;padding:8px 0;font-size:12px;color:#475569}
             .sum-row.total{border-top:2px solid #10b981;margin-top:10px;padding-top:12px;font-weight:800;font-size:14px;color:#1e293b}
             .footer{clear:both;margin-top:50px;text-align:center;font-size:9px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:20px}
-            @media print { .header-bar { -webkit-print-color-adjust: exact; } }
+            @media print { 
+                .header-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+                th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                tr:nth-child(even) td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                .in { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                .out { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                .sum-row.total { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
         </style></head><body>
         <div class="header-bar">
             ${settings.appLogoUrl ? `<img src="${settings.appLogoUrl}">` : ''}
