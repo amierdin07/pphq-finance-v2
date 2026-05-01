@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const NonMoneyTransactionsPage = () => {
-    const { transactions, allTransactions, addTransaction, updateTransaction, deleteTransaction, currentUser, branches, globalSearchTerm } = useAppContext();
+    const { transactions, allTransactions, addTransaction, updateTransaction, deleteTransaction, currentUser, branches, globalSearchTerm, settings } = useAppContext();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,7 +87,7 @@ const NonMoneyTransactionsPage = () => {
         const displayTitle = 'LAPORAN TRANSAKSI NON UANG';
         const displaySubtitle = `Unit: ${branchName.toUpperCase()} | Periode: ${exportDates.start} s/d ${exportDates.end}`;
 
-        const logoUrl = currentUser?.settings?.appLogoUrl;
+        const logoUrl = settings.appLogoUrl;
 
         if (logoUrl) {
             try {
@@ -146,7 +146,7 @@ const NonMoneyTransactionsPage = () => {
             return;
         }
 
-        const logoUrl = currentUser?.settings?.appLogoUrl;
+        const logoUrl = settings.appLogoUrl;
         const displayTitle = 'LAPORAN TRANSAKSI NON UANG';
         const displaySubtitle = `UNIT: ${branchName.toUpperCase()} | PERIODE: ${exportDates.start} s/d ${exportDates.end}`;
 
