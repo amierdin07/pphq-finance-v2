@@ -1,0 +1,6 @@
+{
+  "name": "PPHQ Finance",
+  "description": "A financial management system for a non-profit organization with 10 branches, allowing the Finance Manager to track and control all financial transactions from each branch in real time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
