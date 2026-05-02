@@ -147,6 +147,12 @@ async function startServer() {
         return res.json({ status: "success", data: { users, branches, categories, allTransactions, students, settings } });
       }
 
+      if (action === "getSettings") {
+        const settingsRows = db.prepare("SELECT * FROM settings").all() as any[];
+        const settings = settingsRows.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {});
+        return res.json({ status: "success", data: { settings } });
+      }
+
       if (action === "addStudent") {
         const { student } = payload;
         const id = generateId();

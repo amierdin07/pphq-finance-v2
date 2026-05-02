@@ -19,7 +19,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
 const SettingsPage = () => {
-    const { currentUser, allTransactions, settings, updateSettings, updateUser, logout } = useAppContext();
+    const { currentUser, allTransactions, settings, updateSettings, updateUser, logout, resetData } = useAppContext();
     const [token, setToken] = useState<string | null>(localStorage.getItem('google_access_token'));
     const [profile, setProfile] = useState<any | null>(JSON.parse(localStorage.getItem('google_profile') || 'null'));
     const [isSyncing, setIsSyncing] = useState(false);

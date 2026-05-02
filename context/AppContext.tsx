@@ -95,7 +95,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const data = await callApi('getAllData');
+                const data = await callApi('getSettings');
                 if (data.settings) {
                     setSettings(data.settings);
                 }
