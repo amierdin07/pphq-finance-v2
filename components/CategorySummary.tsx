@@ -82,7 +82,6 @@ const CategorySummary: React.FC<CategorySummaryProps> = ({ transactions }) => {
 
     return (
         <div>
-            <h2 className="text-xl font-bold text-text-primary mb-4">Ringkasan per Kategori</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Income Summary Card */}
                 <div className="bg-card p-4 sm:p-6 rounded-xl border border-border shadow-sm">

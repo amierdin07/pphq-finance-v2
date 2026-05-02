@@ -12,8 +12,8 @@ const BottomNav = () => {
         { to: '/monitoring', icon: <BarChartIcon className="w-5 h-5" />, label: 'Monitor' },
         { to: '/syahriyah', icon: <UserIcon className="w-5 h-5" />, label: 'Syahriyah' },
         { to: '/income-non-money', icon: <GiftIcon className="w-5 h-5" />, label: 'Non Uang' },
+        { to: '/categories', icon: <CategoryIcon className="w-5 h-5" />, label: 'Kategori' },
         { to: '/branches', icon: <BranchIcon className="w-5 h-5" />, label: 'unit' },
-        { to: '/profile', icon: <SettingsIcon className="w-5 h-5" />, label: 'Akun' },
     ];
 
     const branchItems = [
@@ -22,7 +22,6 @@ const BottomNav = () => {
         { to: '/income', icon: <IncomeIcon className="w-5 h-5" />, label: 'Pemasukan' },
         { to: '/expenses', icon: <ExpenseIcon className="w-5 h-5" />, label: 'Pengeluaran' },
         { to: '/income-non-money', icon: <GiftIcon className="w-5 h-5" />, label: 'Non Uang' },
-        { to: '/profile', icon: <SettingsIcon className="w-5 h-5" />, label: 'Akun' },
     ];
 
     const menuItems = currentUser?.role === Role.Admin ? adminItems : branchItems;

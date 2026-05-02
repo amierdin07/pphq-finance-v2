@@ -71,7 +71,7 @@ const MonitoringPage = () => {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800">monitoring unit</h1>
-                    <p className="text-slate-400 font-medium mt-1">Pantau performa keuangan 12 unit secara real-time.</p>
+                    <p className="text-slate-400 font-medium mt-1">Pantau performa keuangan seluruh unit secara real-time.</p>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">

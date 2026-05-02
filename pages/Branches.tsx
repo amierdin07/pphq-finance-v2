@@ -31,7 +31,7 @@ const Branches = () => {
     };
 
     const downloadAllCredentials = () => {
-        const branchUsers = users.filter(u => u.role !== Role.Admin);
+        const branchUsers = users.filter(u => u.role !== Role.Admin || u.id !== currentUser?.id);
         if (branchUsers.length === 0) return alert('Tidak ada data pengguna untuk didownload.');
 
         let content = `DAFTAR LOGIN SEMUA UNIT PPHQ\n`;
@@ -70,6 +70,7 @@ const Branches = () => {
     const [userEmail, setUserEmail] = useState('');
     const [userPassword, setUserPassword] = useState('');
     const [userBranchId, setUserBranchId] = useState('');
+    const [userRole, setUserRole] = useState<Role>(Role.BranchUser);
     const [userIsActive, setUserIsActive] = useState(true);
 
     const [showPasswords, setShowPasswords] = useState<{[key: string]: boolean}>({});
@@ -118,7 +119,8 @@ const Branches = () => {
         setUserName(user?.name || '');
         setUserEmail(user?.email || '');
         setUserPassword(user?.password || ''); // Admin can see and change
-        setUserBranchId(user?.branchId || branches[0].id);
+        setUserBranchId(user?.branchId || (branches.length > 0 ? branches[0].id : ''));
+        setUserRole(user?.role || Role.BranchUser);
         setUserIsActive(user?.isActive ?? true);
         setUserModalOpen(true);
     };
@@ -129,8 +131,8 @@ const Branches = () => {
         const userData = {
             name: userName,
             email: userEmail,
-            role: Role.BranchUser,
-            branchId: userBranchId,
+            role: userRole,
+            branchId: userRole === Role.Admin ? '' : userBranchId,
             isActive: userIsActive,
             password: userPassword
         };
@@ -159,6 +161,8 @@ const Branches = () => {
     };
 
     const getBranchUsers = (branchId: string) => users.filter(u => u.branchId === branchId && u.role === Role.BranchUser);
+    
+    const displayUsers = users.filter(u => u.id !== currentUser?.id);
 
     return (
         <div className="space-y-10 animate-in fade-in duration-700 pb-20">
@@ -217,7 +221,7 @@ const Branches = () => {
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
                 <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-800">Daftar Pengguna unit</h2>
+                        <h2 className="text-xl font-bold text-slate-800">Daftar Pengguna Sistem</h2>
                         <p className="text-xs text-slate-400 font-medium mt-1">Gunakan tabel ini untuk melihat atau merubah kata sandi pengguna.</p>
                     </div>
                     <button onClick={downloadAllCredentials} className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all">
@@ -237,15 +241,15 @@ const Branches = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {users.filter(u => u.role !== Role.Admin).map(user => (
+                            {displayUsers.map(user => (
                                 <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="px-8 py-4">
                                         <p className="font-bold text-slate-800">{user.name}</p>
                                         <p className="text-xs text-slate-400">{user.email}</p>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="px-3 py-1 bg-slate-100 text-slate-600 font-bold text-[10px] rounded-lg">
-                                            {branches.find(b => b.id === user.branchId)?.name || 'N/A'}
+                                        <span className={`px-3 py-1 font-bold text-[10px] rounded-lg ${user.role === Role.Admin ? 'bg-purple-50 text-purple-600' : 'bg-slate-100 text-slate-600'}`}>
+                                            {user.role === Role.Admin ? 'Admin' : (branches.find(b => b.id === user.branchId)?.name || 'N/A')}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -323,18 +327,29 @@ const Branches = () => {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Penempatan unit</label>
-                                    <select value={userBranchId} onChange={e => setUserBranchId(e.target.value)} className="mt-2 block w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700 appearance-none" required>
-                                        {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Role / Peran</label>
+                                    <select value={userRole} onChange={e => setUserRole(e.target.value as Role)} className="mt-2 block w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700 appearance-none" required>
+                                        <option value={Role.BranchUser}>User Unit (Cabang)</option>
+                                        <option value={Role.Admin}>Admin (Pusat)</option>
                                     </select>
                                 </div>
-                                 <div>
+                                <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Status Akun</label>
                                     <select value={userIsActive ? 'true' : 'false'} onChange={e => setUserIsActive(e.target.value === 'true')} className="mt-2 block w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700 appearance-none">
                                         <option value="true">Aktif</option>
                                         <option value="false">Nonaktif</option>
                                     </select>
                                 </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {userRole === Role.BranchUser && (
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Penempatan unit</label>
+                                        <select value={userBranchId} onChange={e => setUserBranchId(e.target.value)} className="mt-2 block w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700 appearance-none" required={userRole === Role.BranchUser}>
+                                            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex justify-end gap-3 pt-6">
                                 <button type="button" onClick={closeUserModal} className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all">Batal</button>

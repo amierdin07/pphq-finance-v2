@@ -25,10 +25,9 @@ const NonMoneyTransactionsPage = () => {
 
     const [formState, setFormState] = useState({
         date: new Date().toISOString().split('T')[0],
-        category: '',    // Keterangan
+        category: '',    // Sumber (sebelumnya keterangan)
         description: '', // Nama Barang
-        item: '',        // Sumber
-        quantity: '',    // Jumlah
+        item: '',        // Jumlah / Satuan (sebelumnya Sumber)
         attachmentUrl: '',
     });
 
@@ -125,7 +124,7 @@ const NonMoneyTransactionsPage = () => {
 
         autoTable(doc, {
             startY: 40,
-            head: [['No', 'Tanggal', 'Unit', 'Nama Barang', 'Jumlah', 'Sumber', 'Keterangan']],
+            head: [['No', 'Tanggal', 'Unit', 'Nama Barang', 'Jumlah', 'Sumber']],
             body: rows,
             theme: 'striped',
             headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold' }
@@ -176,8 +175,8 @@ const NonMoneyTransactionsPage = () => {
                 <div class="sub-title">${displaySubtitle}</div>
             </div>
         </div>
-        <table><thead><tr><th>No</th><th>Tanggal</th><th>Unit</th><th>Nama Barang</th><th>Jumlah</th><th>Sumber</th><th>Keterangan</th></tr></thead>
-        <tbody>${toExport.map((t,i)=>`<tr><td>${i+1}</td><td>${new Date(t.date).toLocaleDateString('id-ID')}</td><td>${getBranchName(t.branchId)}</td><td>${t.description}</td><td>${t.amount}</td><td>${t.item || '-'}</td><td>${t.category || '-'}</td></tr>`).join('')}</tbody></table>
+        <table><thead><tr><th>No</th><th>Tanggal</th><th>Unit</th><th>Nama Barang</th><th>Jumlah</th><th>Sumber</th></tr></thead>
+        <tbody>${toExport.map((t,i)=>`<tr><td>${i+1}</td><td>${new Date(t.date).toLocaleDateString('id-ID')}</td><td>${getBranchName(t.branchId)}</td><td>${t.description}</td><td>${t.item || '-'}</td><td>${t.category || '-'}</td></tr>`).join('')}</tbody></table>
         <div class="footer">Dokumen ini dihasilkan otomatis oleh Sistem Keuangan PPHQ</div>
         <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),800)}<\/script>
         </body></html>`;
@@ -238,7 +237,6 @@ const NonMoneyTransactionsPage = () => {
             category: transaction ? transaction.category : '',
             description: transaction ? transaction.description : '',
             item: transaction ? transaction.item || '' : '',
-            quantity: transaction ? transaction.amount.toString() : '',
             attachmentUrl: transaction?.attachmentUrl || '',
         });
         setAttachmentPreview(transaction?.attachmentUrl || null);
@@ -249,7 +247,7 @@ const NonMoneyTransactionsPage = () => {
         setIsModalOpen(false);
         setCurrentTransaction(null);
         setAttachmentPreview(null);
-        setFormState({ date: new Date().toISOString().split('T')[0], category: '', description: '', item: '', quantity: '', attachmentUrl: '' });
+        setFormState({ date: new Date().toISOString().split('T')[0], category: '', description: '', item: '', attachmentUrl: '' });
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -259,17 +257,17 @@ const NonMoneyTransactionsPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formState.description || !formState.item || !formState.quantity) {
-            alert('Harap isi Nama Barang, Jumlah, dan Sumber.');
+        if (!formState.description) {
+            alert('Harap isi Nama Barang.');
             return;
         }
         const transactionData = {
             date: new Date(formState.date).toISOString(),
             branchId: currentUser!.branchId,
-            category: formState.category,
-            description: formState.description,
-            item: formState.item,
-            amount: parseFloat(formState.quantity) || 0,
+            category: formState.category, // Sumber
+            description: formState.description, // Nama Barang
+            item: formState.item, // Jumlah (String)
+            amount: 0,
             type: TransactionType.Income,
             nature: TransactionNature.NonMoney,
             attachmentUrl: formState.attachmentUrl || undefined
@@ -353,10 +351,9 @@ const NonMoneyTransactionsPage = () => {
                                 <th className="px-4 py-3 font-bold border-r border-emerald-500/20">Tanggal</th>
                                 {isAdmin && <th className="px-4 py-3 font-bold border-r border-emerald-500/20">unit</th>}
                                 <th className="px-4 py-3 font-bold border-r border-emerald-500/20">Nama Barang</th>
-                                <th className="px-4 py-3 font-bold border-r border-emerald-500/20 text-center w-20">Jumlah</th>
+                                <th className="px-4 py-3 font-bold border-r border-emerald-500/20 text-center w-32">Jumlah</th>
                                 <th className="px-4 py-3 font-bold border-r border-emerald-500/20 text-center">Nota</th>
                                 <th className="px-4 py-3 font-bold border-r border-emerald-500/20">Sumber</th>
-                                <th className="px-4 py-3 font-bold border-r border-emerald-500/20">Keterangan</th>
                                 {!isAdmin && <th className="px-4 py-3 font-bold text-center w-20">Aksi</th>}
                             </tr>
                         </thead>
@@ -373,7 +370,7 @@ const NonMoneyTransactionsPage = () => {
                                         </td>
                                     )}
                                     <td className="px-4 py-2.5 font-bold text-slate-800 border-r border-slate-100">{t.description}</td>
-                                    <td className="px-4 py-2.5 text-center font-bold text-emerald-600 border-r border-slate-100">{t.amount}</td>
+                                    <td className="px-4 py-2.5 font-bold text-emerald-600 border-r border-slate-100 text-center italic">{t.item || '-'}</td>
                                     <td className="px-4 py-2.5 border-r border-slate-100 text-center">
                                         {t.attachmentUrl ? (
                                             <button 
@@ -386,12 +383,7 @@ const NonMoneyTransactionsPage = () => {
                                             <span className="text-slate-300 text-[9px] font-bold uppercase tracking-widest">N/A</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-2.5 border-r border-slate-100">
-                                        <span className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded-lg font-bold text-[10px] border border-slate-100">
-                                            {t.item || '-'}
-                                        </span>
-                                    </td>
-                                    <td className={`px-4 py-2.5 text-slate-400 italic ${!isAdmin ? 'border-r border-slate-100' : ''}`}>
+                                    <td className={`px-4 py-2.5 border-r border-slate-100 font-bold text-slate-600 ${!isAdmin ? 'border-r border-slate-100' : ''}`}>
                                         {t.category || '-'}
                                     </td>
                                     {!isAdmin && (
@@ -439,18 +431,20 @@ const NonMoneyTransactionsPage = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nama Barang</label>
-                                    <input name="description" type="text" placeholder="Misal: Karung Beras" value={formState.description} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" required />
+                                    <input name="description" type="text" placeholder="Misal: Beras" value={formState.description} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" required />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Sumber</label>
-                                    <input name="item" type="text" placeholder="Misal: Hibah, Donasi" value={formState.item} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" required />
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                        Jumlah <span className="normal-case font-normal text-slate-400">(Opsional)</span>
+                                    </label>
+                                    <input name="item" type="text" placeholder="Misal: 10 Karung" value={formState.item} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" />
                                 </div>
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
-                                    Keterangan <span className="normal-case font-normal text-slate-400">(Opsional)</span>
+                                    Sumber <span className="normal-case font-normal text-slate-400">(Donatur / Pihak Ke-3)</span>
                                 </label>
-                                <textarea name="category" value={formState.category} onChange={handleInputChange} rows={3} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" placeholder="Tambahkan catatan tambahan..." />
+                                <input name="category" type="text" placeholder="Misal: Hibah, Donasi, Nama Orang" value={formState.category} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" />
                             </div>
 
                             {/* Photo Section */}

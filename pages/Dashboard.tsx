@@ -250,7 +250,6 @@ const Dashboard = () => {
             {/* Branch User Monitoring */}
             {currentUser?.role === Role.BranchUser && (
                  <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <h2 className="text-xl font-bold text-slate-800 mb-6">Ringkasan Monitoring</h2>
                     <CategorySummary transactions={filteredData} />
                  </div>
             )}
