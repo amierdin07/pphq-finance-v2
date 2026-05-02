@@ -1,24 +1,32 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, Suspense, lazy } from 'react';
 import ConfirmModal from './components/ConfirmModal';
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AppContext } from './context/AppContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import TransactionsPage from './pages/TransactionsPage';
-import NonMoneyTransactionsPage from './pages/NonMoneyTransactionsPage';
-import CategoriesPage from './pages/CategoriesPage';
-import Branches from './pages/Branches';
-import CashFlow from './pages/CashFlow';
 import { TransactionNature, TransactionType, Role } from './types';
-import BranchTransactions from './pages/BranchTransactions';
-import SettingsPage from './pages/SettingsPage';
-import MonitoringPage from './pages/MonitoringPage';
-import SyahriyahPage from './pages/SyahriyahPage';
 import { Logo } from './constants';
-
 import BottomNav from './components/BottomNav';
+
+// Lazy load pages for better performance
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const TransactionsPage = lazy(() => import('./pages/TransactionsPage'));
+const NonMoneyTransactionsPage = lazy(() => import('./pages/NonMoneyTransactionsPage'));
+const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
+const Branches = lazy(() => import('./pages/Branches'));
+const CashFlow = lazy(() => import('./pages/CashFlow'));
+const BranchTransactions = lazy(() => import('./pages/BranchTransactions'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const MonitoringPage = lazy(() => import('./pages/MonitoringPage'));
+const SyahriyahPage = lazy(() => import('./pages/SyahriyahPage'));
+
+// Simple loading fallback for lazy routes
+const PageLoader = () => (
+    <div className="flex items-center justify-center h-[60vh]">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+);
 
 const PrivateLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -101,45 +109,47 @@ function App() {
 
   return (
     <>
-      <Routes>
-        <Route path="/login" element={!currentUser ? <Login /> : <Navigate to="/" />} />
-        <Route
-          path="/*"
-          element={
-            currentUser ? (
-              <PrivateLayout />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="cash-flow" element={<CashFlow />} />
-          <Route path="income-non-money" element={<NonMoneyTransactionsPage />} />
-          <Route path="profile" element={<SettingsPage />} />
-          <Route path="syahriyah" element={<SyahriyahPage />} />
-
-          {/* BranchUser specific routes */}
-          {currentUser?.role === Role.BranchUser && (
-            <>
-              <Route path="income" element={<TransactionsPage type={TransactionType.Income} nature={TransactionNature.Money} />} />
-              <Route path="expenses" element={<TransactionsPage type={TransactionType.Expense} />} />
-            </>
-          )}
-          
-          {/* Admin specific routes */}
-          {currentUser?.role === Role.Admin && (
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/login" element={!currentUser ? <Login /> : <Navigate to="/" />} />
+          <Route
+            path="/*"
+            element={
+              currentUser ? (
+                <PrivateLayout />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="cash-flow" element={<CashFlow />} />
+            <Route path="income-non-money" element={<NonMoneyTransactionsPage />} />
+            <Route path="profile" element={<SettingsPage />} />
+            <Route path="syahriyah" element={<SyahriyahPage />} />
+  
+            {/* BranchUser specific routes */}
+            {currentUser?.role === Role.BranchUser && (
               <>
-                  <Route path="monitoring" element={<MonitoringPage />} />
-                  <Route path="categories" element={<CategoriesPage />} />
-                  <Route path="branches" element={<Branches />} />
-                  <Route path="branch-transactions/:branchId" element={<BranchTransactions />} />
+                <Route path="income" element={<TransactionsPage type={TransactionType.Income} nature={TransactionNature.Money} />} />
+                <Route path="expenses" element={<TransactionsPage type={TransactionType.Expense} />} />
               </>
-          )}
-
-          <Route path="*" element={<Navigate to="/" />} />
-        </Route>
-      </Routes>
+            )}
+            
+            {/* Admin specific routes */}
+            {currentUser?.role === Role.Admin && (
+                <>
+                    <Route path="monitoring" element={<MonitoringPage />} />
+                    <Route path="categories" element={<CategoriesPage />} />
+                    <Route path="branches" element={<Branches />} />
+                    <Route path="branch-transactions/:branchId" element={<BranchTransactions />} />
+                </>
+            )}
+  
+            <Route path="*" element={<Navigate to="/" />} />
+          </Route>
+        </Routes>
+      </Suspense>
 
       <ConfirmModal 
           isOpen={confirmState.isOpen}
