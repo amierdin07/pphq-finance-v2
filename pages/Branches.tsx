@@ -4,7 +4,7 @@ import { Branch, User, Role } from '../types';
 import { BranchIcon, UserIcon, PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon, DownloadIcon } from '../constants';
 
 const Branches = () => {
-    const { branches, users, addBranch, updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser } = useAppContext();
+    const { branches, users, addBranch, updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser, showConfirm } = useAppContext();
     
     // ... state ...
 
@@ -98,9 +98,14 @@ const Branches = () => {
     };
 
     const handleBranchDelete = async (id: string) => {
-        if (window.confirm('Yakin hapus unit ini? Semua pengguna dan transaksi yang terkait dengan unit ini juga akan dihapus.')) {
-            await deleteBranch(id);
-        }
+        showConfirm(
+            'Hapus Unit?', 
+            'Apakah Anda yakin ingin menghapus unit ini? Semua pengguna dan transaksi yang terkait dengan unit ini juga akan dihapus.',
+            async () => {
+                await deleteBranch(id);
+            },
+            'danger'
+        );
     };
 
     // User Modal Logic
@@ -143,9 +148,14 @@ const Branches = () => {
     };
     
     const handleUserDelete = async (id: string) => {
-        if (window.confirm('Yakin hapus pengguna ini?')) {
-            await deleteUser(id);
-        }
+        showConfirm(
+            'Hapus Pengguna?', 
+            'Apakah Anda yakin ingin menghapus pengguna ini?',
+            async () => {
+                await deleteUser(id);
+            },
+            'danger'
+        );
     };
 
     const getBranchUsers = (branchId: string) => users.filter(u => u.branchId === branchId && u.role === Role.BranchUser);

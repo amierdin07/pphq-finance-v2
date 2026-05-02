@@ -98,6 +98,17 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 const data = await callApi('getSettings');
                 if (data.settings) {
                     setSettings(data.settings);
+                    
+                    // Dynamic Favicon
+                    if (data.settings.appLogoUrl) {
+                        let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+                        if (!link) {
+                            link = document.createElement('link');
+                            link.rel = 'icon';
+                            document.head.appendChild(link);
+                        }
+                        link.href = data.settings.appLogoUrl;
+                    }
                 }
             } catch (error) {
                 console.error("Could not load settings.", error);
@@ -147,6 +158,40 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         }
     }, [currentUser]);
 
+    // Confirmation Modal State
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        type: 'danger' | 'info' | 'success';
+        confirmText?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+        type: 'danger'
+    });
+
+    const showConfirm = useCallback((title: string, message: string, onConfirm: () => void, type: 'danger' | 'info' | 'success' = 'danger', confirmText?: string) => {
+        setConfirmState({
+            isOpen: true,
+            title,
+            message,
+            onConfirm: () => {
+                onConfirm();
+                setConfirmState(prev => ({ ...prev, isOpen: false }));
+            },
+            type,
+            confirmText
+        });
+    }, []);
+
+    const closeConfirm = useCallback(() => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+    }, []);
+
     const login = useCallback(async (email: string, password: string): Promise<boolean> => {
         setIsLoading(true);
         try {
@@ -174,22 +219,27 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, []);
     
     const resetData = useCallback(async () => {
-       if (window.confirm("Yakin ingin mereset semua data? Aksi ini tidak dapat dibatalkan.")) {
-            setIsLoading(true);
-            try {
-                const data = await callApi('resetData');
-                setUsers(data.users || []);
-                setBranches(data.branches || []);
-                setCategories(data.categories || []);
-                setAllTransactions(data.allTransactions || []);
-                alert('Data berhasil direset.');
-            } catch (error) {
-                alert('Gagal mereset data.');
-            } finally {
-                setIsLoading(false);
-            }
-       }
-    }, []);
+       showConfirm(
+           "Reset Semua Data?", 
+           "Apakah Anda yakin ingin menghapus semua data transaksi, unit, dan kategori? Aksi ini tidak dapat dibatalkan.",
+           async () => {
+                setIsLoading(true);
+                try {
+                    const data = await callApi('resetData');
+                    setUsers(data.users || []);
+                    setBranches(data.branches || []);
+                    setCategories(data.categories || []);
+                    setAllTransactions(data.allTransactions || []);
+                } catch (error) {
+                    console.error('Gagal mereset data.');
+                } finally {
+                    setIsLoading(false);
+                }
+           },
+           'danger',
+           'Ya, Reset Total'
+       );
+    }, [showConfirm]);
 
     const updateUser = useCallback(async (updatedUser: User) => {
         if (currentUser && currentUser.id === updatedUser.id) {
@@ -318,6 +368,9 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             allTransactions,
             announcements,
             settings,
+            confirmState,
+            showConfirm,
+            closeConfirm,
             globalSearchTerm,
             setGlobalSearchTerm,
             login,
@@ -347,6 +400,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         };
     }, [
         currentUser, isLoading, users, branches, categories, students, allTransactions, announcements, settings,
+        confirmState, showConfirm, closeConfirm,
         login, logout, resetData, updateUser, updateSettings, addStudent, updateStudent, deleteStudent,
         addTransaction, updateTransaction,
         deleteTransaction, addCategory, updateCategory, deleteCategory, addBranch,

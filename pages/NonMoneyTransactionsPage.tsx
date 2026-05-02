@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const NonMoneyTransactionsPage = () => {
-    const { transactions, allTransactions, addTransaction, updateTransaction, deleteTransaction, currentUser, branches, globalSearchTerm, settings } = useAppContext();
+    const { transactions, allTransactions, addTransaction, updateTransaction, deleteTransaction, currentUser, branches, globalSearchTerm, settings, showConfirm } = useAppContext();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -283,9 +283,14 @@ const NonMoneyTransactionsPage = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (window.confirm('Yakin hapus transaksi non-uang ini?')) {
-            await deleteTransaction(id);
-        }
+        showConfirm(
+            'Hapus Transaksi?',
+            'Apakah Anda yakin ingin menghapus transaksi non-uang ini?',
+            async () => {
+                await deleteTransaction(id);
+            },
+            'danger'
+        );
     };
 
     const openImageModal = (url: string) => {

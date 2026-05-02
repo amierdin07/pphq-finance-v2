@@ -12,7 +12,7 @@ interface TransactionsPageProps {
 }
 
 const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = TransactionNature.Money }) => {
-    const { transactions, categories, addTransaction, updateTransaction, deleteTransaction, currentUser, globalSearchTerm } = useAppContext();
+    const { transactions, categories, addTransaction, updateTransaction, deleteTransaction, currentUser, globalSearchTerm, showConfirm } = useAppContext();
     const location = useLocation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -134,9 +134,14 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
     };
     
     const handleDelete = async (id: string) => {
-        if(window.confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
-            await deleteTransaction(id);
-        }
+        showConfirm(
+            'Hapus Transaksi?', 
+            'Apakah Anda yakin ingin menghapus transaksi ini? Data yang dihapus tidak dapat dikembalikan.',
+            async () => {
+                await deleteTransaction(id);
+            },
+            'danger'
+        );
     };
 
     const openImageModal = (url: string) => {

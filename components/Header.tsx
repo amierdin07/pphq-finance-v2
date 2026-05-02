@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
-    const { currentUser, logout, announcements, globalSearchTerm, setGlobalSearchTerm } = useAppContext();
+    const { currentUser, logout, announcements, globalSearchTerm, setGlobalSearchTerm, showConfirm } = useAppContext();
     const [notifOpen, setNotifOpen] = useState(false);
 
     const unreadCount = announcements.filter(a => !a.isRead).length;
@@ -60,7 +60,11 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                             className="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-sm"
                         />
                     </Link>
-                    <button onClick={logout} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Logout">
+                    <button 
+                        onClick={() => showConfirm('Keluar Aplikasi?', 'Apakah Anda yakin ingin keluar dari akun ini?', logout, 'info', 'Ya, Keluar')} 
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" 
+                        title="Logout"
+                    >
                         <LogoutIcon className="w-5 h-5" />
                     </button>
                 </div>
