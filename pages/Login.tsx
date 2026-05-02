@@ -10,7 +10,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAppContext();
+  const { login, settings } = useAppContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,12 +29,16 @@ const Login = () => {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-card shadow-lg rounded-xl p-8 space-y-6 border border-border">
         <div className="flex flex-col items-center">
-          <Logo />
+          {settings.appLogoUrl ? (
+            <img src={settings.appLogoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg" />
+          ) : (
+            <Logo />
+          )}
           <h2 className="mt-4 text-center text-2xl font-bold text-text-primary">
-            Selamat Datang di PPHQ Finance
+            Selamat Datang di {settings.appName || 'PPHQ Finance'}
           </h2>
           <p className="mt-2 text-center text-sm text-text-secondary">
-            Masuk untuk melanjutkan ke dasbor Anda
+            {settings.appSubtitle || 'Masuk untuk melanjutkan ke dasbor Anda'}
           </p>
         </div>
         <form className="space-y-6" onSubmit={handleSubmit}>
@@ -92,7 +96,7 @@ const Login = () => {
               </button>
             </div>
             <div className="flex justify-end mt-2">
-                <a href="#" onClick={(e) => { e.preventDefault(); alert('Silakan hubungi Admin Pusat untuk reset kata sandi Anda.'); }} className="text-[10px] font-bold text-emerald-600 hover:underline">Lupa password? Hubungi Admin Pusat</a>
+                <a href="https://wa.me/6281553854670" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-emerald-600 hover:underline">Lupa password? Hubungi Admin Pusat</a>
             </div>
           </div>
           {error && <p className="text-sm text-red-600 text-center">{error}</p>}

@@ -382,62 +382,78 @@ const SettingsPage = () => {
                                 Backup data ke Google Sheets untuk kemudahan analisis offline dan laporan Spreadsheet.
                             </p>
  
-                             <div className="p-5 rounded-3xl bg-slate-50 border border-slate-100">
-                                 {profile ? (
-                                     <div className="space-y-6">
-                                         <div className="flex items-center gap-3">
-                                             <img src={profile.picture} alt="profile" className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
-                                             <div className="overflow-hidden">
-                                                 <p className="font-bold text-slate-700 text-sm truncate">{profile.name}</p>
-                                                 <p className="text-[10px] text-slate-400 truncate font-bold">{profile.email}</p>
-                                             </div>
-                                         </div>
-                                         
-                                         <div className="space-y-3">
-                                             <button
-                                                 onClick={handleSync}
-                                                 disabled={isSyncing}
-                                                 className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all font-bold text-sm disabled:opacity-50 shadow-md"
-                                             >
-                                                 {isSyncing ? 'Menyinkronkan...' : 'Backup Sekarang'}
-                                             </button>
-                                             <button
-                                                 onClick={handleDisconnect}
-                                                 className="w-full py-2.5 text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
-                                             >
-                                                 Putuskan Koneksi
-                                             </button>
-                                         </div>
-                                     </div>
-                                 ) : (
-                                     <div className="text-center py-4">
-                                         <button
-                                             onClick={() => login()}
-                                             className="inline-flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all w-full justify-center"
-                                         >
-                                             <GoogleIcon />
-                                             <span className="font-bold text-slate-700 text-sm">Hubungkan Google</span>
-                                         </button>
-                                     </div>
-                                 )}
+                            <div className="p-5 rounded-3xl bg-slate-50 border border-slate-100">
+                                {profile ? (
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3">
+                                            <img src={profile.picture} alt="profile" className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
+                                            <div className="overflow-hidden">
+                                                <p className="font-bold text-slate-700 text-sm truncate">{profile.name}</p>
+                                                <p className="text-[10px] text-slate-400 truncate font-bold">{profile.email}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <button
+                                                onClick={handleSync}
+                                                disabled={isSyncing}
+                                                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all font-bold text-sm disabled:opacity-50 shadow-md"
+                                            >
+                                                {isSyncing ? 'Menyinkronkan...' : 'Backup Sekarang'}
+                                            </button>
+                                            <button
+                                                onClick={handleDisconnect}
+                                                className="w-full py-2.5 text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
+                                            >
+                                                Putuskan Koneksi
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4">
+                                        <button
+                                            onClick={() => login()}
+                                            className="inline-flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all w-full justify-center"
+                                        >
+                                            <GoogleIcon />
+                                            <span className="font-bold text-slate-700 text-sm">Hubungkan Google</span>
+                                        </button>
+                                    </div>
+                                )}
  
-                                 {syncMessage && (
-                                     <div className={`mt-4 p-4 rounded-xl text-[10px] font-bold border ${syncMessage.includes('Gagal') ? 'text-red-600 bg-red-50 border-red-100' : 'text-emerald-700 bg-emerald-50 border-emerald-100'}`}>
-                                         {syncMessage.startsWith('Sinkronisasi berhasil!') ? (
-                                             <div className="flex flex-col gap-2">
-                                                 <span>✅ {syncMessage.split('Lihat di: ')[0]}</span>
-                                                 <a href={syncMessage.split('Lihat di: ')[1]} target="_blank" rel="noopener noreferrer" className="inline-block px-3 py-2 bg-emerald-600 text-white rounded-lg text-center hover:bg-emerald-700">Buka Spreadsheet</a>
-                                             </div>
-                                         ) : syncMessage}
-                                     </div>
-                                 )}
-                             </div>
-                         </div>
-                     </div>
-                 )}
-             </div>
-         </div>
-     );
- };
- 
- export default SettingsPage;
+                                {syncMessage && (
+                                    <div className={`mt-4 p-4 rounded-xl text-[10px] font-bold border ${syncMessage.includes('Gagal') ? 'text-red-600 bg-red-50 border-red-100' : 'text-emerald-700 bg-emerald-50 border-emerald-100'}`}>
+                                        {syncMessage.startsWith('Sinkronisasi berhasil!') ? (
+                                            <div className="flex flex-col gap-2">
+                                                <span>✅ {syncMessage.split('Lihat di: ')[0]}</span>
+                                                <a href={syncMessage.split('Lihat di: ')[1]} target="_blank" rel="noopener noreferrer" className="inline-block px-3 py-2 bg-emerald-600 text-white rounded-lg text-center hover:bg-emerald-700">Buka Spreadsheet</a>
+                                            </div>
+                                        ) : syncMessage}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="bg-red-50 p-8 rounded-[2rem] border border-red-100">
+                            <h2 className="text-xl font-bold text-red-800 mb-2 flex items-center gap-2">
+                                <span className="p-2 bg-red-100 rounded-lg"><TrashIcon className="w-5 h-5 text-red-600" /></span>
+                                Zona Bahaya
+                            </h2>
+                            <p className="text-red-500 text-xs mb-6 ml-11 leading-relaxed">
+                                Fitur ini akan menghapus semua data unit, semua akun pengguna unit, dan semua transaksi keuangan. Akun Super Admin dan Pengaturan Aplikasi (Logo/Nama) akan tetap aman.
+                            </p>
+                            <button
+                                onClick={resetData}
+                                className="ml-11 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-bold text-sm shadow-lg shadow-red-200"
+                            >
+                                Reset Semua Data Aplikasi
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default SettingsPage;

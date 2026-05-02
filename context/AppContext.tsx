@@ -91,6 +91,21 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [settings, setSettings] = useState<AppSettings>(defaultSettings);
     const [globalSearchTerm, setGlobalSearchTerm] = useState('');
 
+    // Fetch settings on mount (needed for Login page logo/name)
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const data = await callApi('getAllData');
+                if (data.settings) {
+                    setSettings(data.settings);
+                }
+            } catch (error) {
+                console.error("Could not load settings.", error);
+            }
+        };
+        fetchSettings();
+    }, []);
+
     useEffect(() => {
         const fetchInitialData = async () => {
             if (currentUser) {
@@ -102,6 +117,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                     setCategories(data.categories || []);
                     setStudents((data.students || []).map((s: any) => ({ ...s, isActive: !!s.isActive })));
                     setAllTransactions(data.allTransactions || []);
+                    // Settings are already fetched in the other useEffect, but we update again just in case
                     if (data.settings) {
                         setSettings(data.settings);
                     }

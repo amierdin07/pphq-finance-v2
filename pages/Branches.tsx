@@ -1,11 +1,62 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Branch, User, Role } from '../types';
-import { BranchIcon, UserIcon, PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '../constants';
+import { BranchIcon, UserIcon, PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon, DownloadIcon } from '../constants';
 
 const Branches = () => {
     const { branches, users, addBranch, updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser } = useAppContext();
     
+    // ... state ...
+
+    const downloadUserCredentials = (user: User) => {
+        const branch = branches.find(b => b.id === user.branchId);
+        const content = `DATA LOGIN UNIT PPHQ\n` +
+                      `===================\n` +
+                      `Unit     : ${branch?.name || 'N/A'}\n` +
+                      `Nama     : ${user.name}\n` +
+                      `Email    : ${user.email}\n` +
+                      `Password : ${user.password}\n` +
+                      `===================\n` +
+                      `Harap simpan data ini dengan aman.`;
+        
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `login_${user.name.replace(/\s+/g, '_').toLowerCase()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const downloadAllCredentials = () => {
+        const branchUsers = users.filter(u => u.role !== Role.Admin);
+        if (branchUsers.length === 0) return alert('Tidak ada data pengguna untuk didownload.');
+
+        let content = `DAFTAR LOGIN SEMUA UNIT PPHQ\n`;
+        content += `Dicetak pada: ${new Date().toLocaleString('id-ID')}\n\n`;
+
+        branchUsers.forEach((user, index) => {
+            const branch = branches.find(b => b.id === user.branchId);
+            content += `${index + 1}. UNIT: ${branch?.name || 'N/A'}\n`;
+            content += `   Nama     : ${user.name}\n`;
+            content += `   Email    : ${user.email}\n`;
+            content += `   Password : ${user.password}\n`;
+            content += `-------------------\n`;
+        });
+
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `daftar_login_semua_unit.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     // State for Branch Modal
     const [isBranchModalOpen, setBranchModalOpen] = useState(false);
     const [currentBranch, setCurrentBranch] = useState<Branch | null>(null);
@@ -139,7 +190,12 @@ const Branches = () => {
                                         <p className="text-xs font-bold text-slate-700 leading-none">{user.name}</p>
                                         <p className="text-[9px] text-slate-400 mt-1">{user.email}</p>
                                     </div>
-                                    <div className={`w-2 h-2 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-red-500'} shadow-sm`} />
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => downloadUserCredentials(user)} className="p-1.5 text-slate-400 hover:text-emerald-500 transition-colors" title="Download Data Login">
+                                            <DownloadIcon className="w-3.5 h-3.5" />
+                                        </button>
+                                        <div className={`w-2 h-2 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-red-500'} shadow-sm`} />
+                                    </div>
                                 </div>
                             ))}
                             {getBranchUsers(branch.id).length === 0 && <p className="text-[10px] text-slate-300 italic">Belum ada pengguna.</p>}
@@ -149,9 +205,15 @@ const Branches = () => {
             </div>
 
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/30">
-                    <h2 className="text-xl font-bold text-slate-800">Daftar Pengguna unit</h2>
-                    <p className="text-xs text-slate-400 font-medium mt-1">Gunakan tabel ini untuk melihat atau merubah kata sandi pengguna.</p>
+                <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-800">Daftar Pengguna unit</h2>
+                        <p className="text-xs text-slate-400 font-medium mt-1">Gunakan tabel ini untuk melihat atau merubah kata sandi pengguna.</p>
+                    </div>
+                    <button onClick={downloadAllCredentials} className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all">
+                        <DownloadIcon className="w-4 h-4" />
+                        Download Semua
+                    </button>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
@@ -193,6 +255,7 @@ const Branches = () => {
                                     </td>
                                     <td className="px-8 py-4 text-right">
                                         <div className="flex justify-end gap-2">
+                                            <button onClick={() => downloadUserCredentials(user)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-all" title="Download Data Login"><DownloadIcon className="w-4 h-4" /></button>
                                             <button onClick={() => openUserModal(user)} className="p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 rounded-xl transition-all"><PencilIcon className="w-4 h-4" /></button>
                                             <button onClick={() => handleUserDelete(user.id)} className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all"><TrashIcon className="w-4 h-4" /></button>
                                         </div>
