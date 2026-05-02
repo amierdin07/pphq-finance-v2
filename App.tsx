@@ -21,10 +21,14 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const MonitoringPage = lazy(() => import('./pages/MonitoringPage'));
 const SyahriyahPage = lazy(() => import('./pages/SyahriyahPage'));
 
-// Simple loading fallback for lazy routes
+// Optimized loading fallback for lazy routes
 const PageLoader = () => (
-    <div className="flex items-center justify-center h-[60vh]">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+    <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <div className="relative">
+            <div className="w-12 h-12 border-4 border-emerald-100 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Memuat Halaman</p>
     </div>
 );
 
@@ -37,10 +41,8 @@ const PrivateLayout = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Auto refresh data on navigation
-  useEffect(() => {
-    refreshAllData();
-  }, [location.pathname, refreshAllData]);
+  // Removed automatic refresh on every navigation to improve performance.
+  // Data is now managed more efficiently within the context.
 
   return (
     <div className="flex h-screen bg-background">
@@ -60,6 +62,29 @@ const PrivateLayout = () => {
 
 function App() {
   const context = useContext(AppContext);
+
+  // Prefetch other pages after the initial load
+  useEffect(() => {
+    if (context && !context.isLoading) {
+      const timer = setTimeout(() => {
+        const prefetch = [
+            () => import('./pages/Dashboard'),
+            () => import('./pages/TransactionsPage'),
+            () => import('./pages/NonMoneyTransactionsPage'),
+            () => import('./pages/CategoriesPage'),
+            () => import('./pages/Branches'),
+            () => import('./pages/CashFlow'),
+            () => import('./pages/BranchTransactions'),
+            () => import('./pages/SettingsPage'),
+            () => import('./pages/MonitoringPage'),
+            () => import('./pages/SyahriyahPage'),
+        ];
+        prefetch.forEach(p => p());
+      }, 2000); // Wait 2 seconds after initial load to avoid competing with initial data fetch
+      return () => clearTimeout(timer);
+    }
+  }, [context?.isLoading]);
+
 
   if (!context || context.isLoading) {
     const { settings } = context || { settings: {} };

@@ -227,15 +227,21 @@ const SyahriyahPage = () => {
                     <p className="text-slate-400 font-medium mt-1">Pilih unit untuk memantau data syahriyah santri.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {branches.map(branch => (
-                        <div key={branch.id} onClick={() => setViewingBranchId(branch.id)} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-emerald-100 transition-all cursor-pointer group">
-                            <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-emerald-50 transition-colors w-fit mb-4">
-                                <BranchIcon className="w-6 h-6 text-slate-400 group-hover:text-emerald-500" />
+                    {branches.map(branch => {
+                        const branchStudents = students.filter(s => s.branchId === branch.id);
+                        return (
+                            <div key={branch.id} onClick={() => setViewingBranchId(branch.id)} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-emerald-100 transition-all cursor-pointer group">
+                                <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-emerald-50 transition-colors w-fit mb-4">
+                                    <BranchIcon className="w-6 h-6 text-slate-400 group-hover:text-emerald-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-1 group-hover:text-emerald-600 transition-colors">{branch.name}</h3>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs text-slate-400 font-medium">{branch.location}</p>
+                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">{branchStudents.length} Santri</span>
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-1 group-hover:text-emerald-600 transition-colors">{branch.name}</h3>
-                            <p className="text-xs text-slate-400 font-medium">{branch.location}</p>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         );
@@ -495,7 +501,9 @@ const SyahriyahPage = () => {
                 branches={branches}
                 title="Laporan Syahriyah"
                 branchName={currentBranch?.name}
-                mode="detailed"
+                mode="syahriyah"
+                students={filteredStudents}
+                selectedYear={selectedYear}
             />
         </div>
     );
