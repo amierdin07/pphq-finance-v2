@@ -120,4 +120,16 @@ export interface AppContextType {
   markAnnouncementRead: (announcementId: string) => Promise<void>;
   deleteAnnouncement: (id: string) => Promise<void>;
   refreshAnnouncements: () => Promise<void>;
+  // UI & Utility
+  confirmState: {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: 'danger' | 'info' | 'success';
+    confirmText?: string;
+  };
+  showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'info' | 'success', confirmText?: string) => void;
+  closeConfirm: () => void;
+  refreshAllData: () => Promise<void>;
 }

@@ -71,6 +71,16 @@ const defaultContextValue: AppContextType = {
   markAnnouncementRead: async () => {},
   deleteAnnouncement: async () => {},
   refreshAnnouncements: async () => {},
+  confirmState: {
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'danger'
+  },
+  showConfirm: () => {},
+  closeConfirm: () => {},
+  refreshAllData: async () => {},
 };
 
 export const AppContext = createContext<AppContextType>(defaultContextValue);

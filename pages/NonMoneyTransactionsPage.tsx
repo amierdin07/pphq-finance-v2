@@ -418,15 +418,9 @@ const NonMoneyTransactionsPage = () => {
                         <h2 className="text-2xl font-bold text-slate-800 mb-1">{currentTransaction ? 'Edit' : 'Tambah'} Transaksi</h2>
                         <p className="text-slate-400 text-sm mb-8">Lengkapi detail transaksi non-uang di bawah ini.</p>
                         <form onSubmit={handleSubmit} className="space-y-5">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Tanggal</label>
-                                    <input name="date" type="date" value={formState.date} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" required />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Jumlah</label>
-                                    <input name="quantity" type="number" placeholder="Misal: 10" value={formState.quantity} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" required />
-                                </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Tanggal Transaksi</label>
+                                <input name="date" type="date" value={formState.date} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" required />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

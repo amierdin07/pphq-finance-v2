@@ -1,7 +1,7 @@
 import React from 'react';
 
-export const Logo = () => (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
         <rect width="32" height="32" rx="10" fill="#10b981"/>
         <path d="M16 7V25" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
         <path d="M16 7H22C24.2091 7 26 8.79086 26 11V13C26 15.2091 24.2091 17 22 17H16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
