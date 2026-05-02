@@ -117,38 +117,39 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         fetchSettings();
     }, []);
 
+    const refreshAllData = useCallback(async () => {
+        if (currentUser) {
+            try {
+                const data = await callApi('getAllData');
+                setUsers((data.users || []).map((u: any) => ({ ...u, isActive: !!u.isActive })));
+                setBranches(data.branches || []);
+                setCategories(data.categories || []);
+                setStudents((data.students || []).map((s: any) => ({ ...s, isActive: !!s.isActive })));
+                setAllTransactions(data.allTransactions || []);
+                if (data.settings) {
+                    setSettings(data.settings);
+                }
+                const annData = await callApi('getAnnouncements', { userId: currentUser.id });
+                setAnnouncements(annData.announcements || []);
+            } catch (error) {
+                console.error("Refresh failed:", error);
+            }
+        }
+    }, [currentUser]);
+
     useEffect(() => {
         const fetchInitialData = async () => {
             if (currentUser) {
                 setIsLoading(true);
-                try {
-                    const data = await callApi('getAllData');
-                    setUsers((data.users || []).map((u: any) => ({ ...u, isActive: !!u.isActive })));
-                    setBranches(data.branches || []);
-                    setCategories(data.categories || []);
-                    setStudents((data.students || []).map((s: any) => ({ ...s, isActive: !!s.isActive })));
-                    setAllTransactions(data.allTransactions || []);
-                    // Settings are already fetched in the other useEffect, but we update again just in case
-                    if (data.settings) {
-                        setSettings(data.settings);
-                    }
-                    
-                    const annData = await callApi('getAnnouncements', { userId: currentUser.id });
-                    setAnnouncements(annData.announcements || []);
-                } catch (error) {
-                    console.error("Could not load initial application data.", error);
-                    alert("Gagal memuat data aplikasi. Silakan coba login kembali.");
-                    logout();
-                } finally {
-                    setIsLoading(false);
-                }
+                await refreshAllData();
+                setIsLoading(false);
             } else {
                 setIsLoading(false);
             }
         };
 
         fetchInitialData();
-    }, [currentUser?.id]);
+    }, [currentUser, refreshAllData]);
 
     useEffect(() => {
         if(currentUser) {
@@ -397,6 +398,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             markAnnouncementRead,
             deleteAnnouncement,
             refreshAnnouncements,
+            refreshAllData,
         };
     }, [
         currentUser, isLoading, users, branches, categories, students, allTransactions, announcements, settings,
@@ -406,6 +408,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         deleteTransaction, addCategory, updateCategory, deleteCategory, addBranch,
         updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser,
         createAnnouncement, markAnnouncementRead, deleteAnnouncement, refreshAnnouncements,
+        refreshAllData,
         globalSearchTerm,
     ]);
 
