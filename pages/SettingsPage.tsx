@@ -3,7 +3,7 @@ import { useAppContext } from '../hooks/useAppContext';
 import { Role, AppSettings } from '../types';
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import { gapi } from 'gapi-script';
-import { CameraIcon, UserIcon, SettingsIcon, LogoutIcon } from '../constants';
+import { CameraIcon, UserIcon, SettingsIcon, LogoutIcon, TrashIcon } from '../constants';
 import { compressImage } from '../utils/imageUtils';
 
 // Google Icon
