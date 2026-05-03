@@ -146,9 +146,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             const rows = summaryData.map((s, i) => [
                 i + 1,
                 s.name,
-                'Rp ' + s.income.toLocaleString('id-ID'),
-                'Rp ' + s.expense.toLocaleString('id-ID'),
-                'Rp ' + s.balance.toLocaleString('id-ID'),
+                'Rp' + s.income.toLocaleString('id-ID'),
+                'Rp' + s.expense.toLocaleString('id-ID'),
+                'Rp' + s.balance.toLocaleString('id-ID'),
             ]);
 
             autoTable(doc, {
@@ -209,7 +209,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 t.description,
                 t.category,
                 t.type === TransactionType.Income ? 'Masuk' : 'Keluar',
-                (t.type === TransactionType.Income ? '+' : '-') + 'Rp ' + t.amount.toLocaleString('id-ID'),
+                (t.type === TransactionType.Income ? '+' : '-') + 'Rp' + t.amount.toLocaleString('id-ID'),
             ]);
 
             autoTable(doc, {
@@ -253,17 +253,17 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             doc.setTextColor(71, 85, 105);
             doc.text('Saldo Awal (Sebelumnya):', sumX, finalY + 3);
             doc.setTextColor(30, 41, 59);
-            doc.text('Rp ' + openingBalance.toLocaleString('id-ID'), pageW - 18, finalY + 3, { align: 'right' });
+            doc.text('Rp' + openingBalance.toLocaleString('id-ID'), pageW - 18, finalY + 3, { align: 'right' });
 
             doc.setTextColor(71, 85, 105);
             doc.text('Total Pemasukan Periode:', sumX, finalY + 10);
             doc.setTextColor(16, 185, 129);
-            doc.text('Rp ' + totalIncome.toLocaleString('id-ID'), pageW - 18, finalY + 10, { align: 'right' });
+            doc.text('Rp' + totalIncome.toLocaleString('id-ID'), pageW - 18, finalY + 10, { align: 'right' });
 
             doc.setTextColor(71, 85, 105);
             doc.text('Total Pengeluaran Periode:', sumX, finalY + 17);
             doc.setTextColor(239, 68, 68);
-            doc.text('Rp ' + totalExpense.toLocaleString('id-ID'), pageW - 18, finalY + 17, { align: 'right' });
+            doc.text('Rp' + totalExpense.toLocaleString('id-ID'), pageW - 18, finalY + 17, { align: 'right' });
 
             doc.setTextColor(16, 185, 129);
             doc.line(sumX - 4, finalY + 21, pageW - 14, finalY + 21);
@@ -273,7 +273,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             doc.setTextColor(30, 41, 59);
             doc.text('SALDO AKHIR:', sumX, finalY + 28);
             doc.setTextColor(finalBalance >= 0 ? 16 : 239, finalBalance >= 0 ? 185 : 68, finalBalance >= 0 ? 129 : 68);
-            doc.text('Rp ' + finalBalance.toLocaleString('id-ID'), pageW - 18, finalY + 28, { align: 'right' });
+            doc.text('Rp' + finalBalance.toLocaleString('id-ID'), pageW - 18, finalY + 28, { align: 'right' });
 
             // — Signature Area (4 Signatures Grid 2x2)
             const sigY = finalY + 50;
@@ -392,7 +392,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             autoTable(doc, {
                 startY: 52,
                 head: [['No', 'Nama unit', 'Pemasukan', 'Pengeluaran', 'Saldo Bersih']],
-                body: summaryData.map((s, i) => [i + 1, s.name, 'Rp ' + s.income.toLocaleString('id-ID'), 'Rp ' + s.expense.toLocaleString('id-ID'), 'Rp ' + s.balance.toLocaleString('id-ID')]),
+                body: summaryData.map((s, i) => [i + 1, s.name, 'Rp' + s.income.toLocaleString('id-ID'), 'Rp' + s.expense.toLocaleString('id-ID'), 'Rp' + s.balance.toLocaleString('id-ID')]),
                 theme: 'striped',
                 headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold' },
                 columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right', fontStyle: 'bold' } },
@@ -429,7 +429,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             autoTable(doc, {
                 startY: 52,
                 head: [['No', 'Tanggal', 'Deskripsi', 'Kategori', 'Tipe', 'Jumlah (Rp)']],
-                body: filtered.map((t, i) => [i + 1, new Date(t.date).toLocaleDateString('id-ID'), t.description, t.category, t.type === TransactionType.Income ? 'Masuk' : 'Keluar', (t.type === TransactionType.Income ? '+' : '-') + 'Rp ' + t.amount.toLocaleString('id-ID')]),
+                body: filtered.map((t, i) => [i + 1, new Date(t.date).toLocaleDateString('id-ID'), t.description, t.category, t.type === TransactionType.Income ? 'Masuk' : 'Keluar', (t.type === TransactionType.Income ? '+' : '-') + 'Rp' + t.amount.toLocaleString('id-ID')]),
                 theme: 'striped',
                 headStyles: { fillColor: [16, 185, 129] },
                 columnStyles: { 5: { halign: 'right', fontStyle: 'bold' } },
@@ -458,22 +458,22 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             doc.setTextColor(71, 85, 105);
             doc.text('Saldo Awal:', sumX, finalY + 3);
             doc.setTextColor(30, 41, 59);
-            doc.text('Rp ' + openingBalance.toLocaleString('id-ID'), pageW - 18, finalY + 3, { align: 'right' });
+            doc.text('Rp' + openingBalance.toLocaleString('id-ID'), pageW - 18, finalY + 3, { align: 'right' });
             
             doc.setTextColor(71, 85, 105);
             doc.text('Total Masuk:', sumX, finalY + 10);
             doc.setTextColor(16, 185, 129);
-            doc.text('Rp ' + totalIncome.toLocaleString('id-ID'), pageW - 18, finalY + 10, { align: 'right' });
+            doc.text('Rp' + totalIncome.toLocaleString('id-ID'), pageW - 18, finalY + 10, { align: 'right' });
 
             doc.setTextColor(71, 85, 105);
             doc.text('Total Keluar:', sumX, finalY + 17);
             doc.setTextColor(239, 68, 68);
-            doc.text('Rp ' + totalExpense.toLocaleString('id-ID'), pageW - 18, finalY + 17, { align: 'right' });
+            doc.text('Rp' + totalExpense.toLocaleString('id-ID'), pageW - 18, finalY + 17, { align: 'right' });
 
             doc.setFont('helvetica', 'bold');
             doc.text('SALDO AKHIR:', sumX, finalY + 28);
             doc.setTextColor(finalBalance >= 0 ? 16 : 239, finalBalance >= 0 ? 185 : 68, finalBalance >= 0 ? 129 : 68);
-            doc.text('Rp ' + finalBalance.toLocaleString('id-ID'), pageW - 18, finalY + 28, { align: 'right' });
+            doc.text('Rp' + finalBalance.toLocaleString('id-ID'), pageW - 18, finalY + 28, { align: 'right' });
 
             // — Signatures
             const sigY = finalY + 50;
@@ -575,7 +575,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                             if (t.item === s.id) return isCorrectPeriod;
                             return isCorrectPeriod && t.description.includes(s.name);
                         });
-                        row.push(p ? `"Rp ${p.amount.toLocaleString('id-ID')}"` : '"-"');
+                        row.push(p ? `"Rp${p.amount.toLocaleString('id-ID')}"` : '"-"');
                     });
                     return row.join(',');
                 })
@@ -587,12 +587,12 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 `"Dicetak: ${new Date().toLocaleString('id-ID')}"`,
                 '',
                 ['"No"', '"Tanggal"', '"Deskripsi"', '"Kategori"', '"Tipe"', '"Jumlah (Rp)"'].join(','),
-                ...filtered.map((t, i) => [i + 1, `"${new Date(t.date).toLocaleDateString('id-ID')}"`, `"${t.description}"`, `"${t.category}"`, `"${t.type === TransactionType.Income ? 'Masuk' : 'Keluar'}"`, t.amount].join(',')),
+                ...filtered.map((t, i) => [i + 1, `"${new Date(t.date).toLocaleDateString('id-ID')}"`, `"${t.description}"`, `"${t.category}"`, `"${t.type === TransactionType.Income ? 'Masuk' : 'Keluar'}"`, `"Rp${t.amount.toLocaleString('id-ID')}"`].join(',')),
                 '',
-                ['', '', '', '', '"SALDO AWAL (SEBELUMNYA)"', openingBalance].join(','),
-                ['', '', '', '', '"TOTAL PEMASUKAN PERIODE"', totalIncome].join(','),
-                ['', '', '', '', '"TOTAL PENGELUARAN PERIODE"', totalExpense].join(','),
-                ['', '', '', '', '"SALDO AKHIR"', finalBalance].join(','),
+                ['', '', '', '', '"SALDO AWAL (SEBELUMNYA)"', `"Rp${openingBalance.toLocaleString('id-ID')}"`].join(','),
+                ['', '', '', '', '"TOTAL PEMASUKAN PERIODE"', `"Rp${totalIncome.toLocaleString('id-ID')}"`].join(','),
+                ['', '', '', '', '"TOTAL PENGELUARAN PERIODE"', `"Rp${totalExpense.toLocaleString('id-ID')}"`].join(','),
+                ['', '', '', '', '"SALDO AKHIR"', `"Rp${finalBalance.toLocaleString('id-ID')}"`].join(','),
             ].join('\n');
         }
 
