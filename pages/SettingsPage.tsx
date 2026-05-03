@@ -439,7 +439,7 @@ const SettingsPage = () => {
                                 Zona Bahaya
                             </h2>
                             <p className="text-red-500 text-xs mb-6 ml-11 leading-relaxed">
-                                Fitur ini akan menghapus semua data unit, semua akun pengguna unit, dan semua transaksi keuangan. Akun Super Admin dan Pengaturan Aplikasi (Logo/Nama) akan tetap aman.
+                                Fitur ini akan menghapus semua data unit, semua akun pengguna unit, dan semua transaksi keuangan. Akun Utama dan Pengaturan Aplikasi (Logo/Nama) akan tetap aman.
                             </p>
                             <button
                                 onClick={resetData}

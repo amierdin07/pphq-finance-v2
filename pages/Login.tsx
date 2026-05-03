@@ -68,7 +68,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(''); }}
                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700"
-                placeholder="admin@pphq.com"
+                placeholder="user@pphq.com"
             />
           </div>
 

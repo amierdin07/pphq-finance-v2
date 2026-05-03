@@ -101,7 +101,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                         />
                         <div className="overflow-hidden">
                             <p className="text-sm font-bold text-slate-800 truncate group-hover:text-emerald-600 transition-colors">{currentUser?.name}</p>
-                            <p className="text-[10px] text-slate-400 truncate">{currentUser?.role}</p>
                         </div>
                     </div>
                 </div>
