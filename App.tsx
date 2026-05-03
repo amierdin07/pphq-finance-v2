@@ -119,17 +119,17 @@ function App() {
              </div>
           </div>
           
-          <div className="text-center space-y-6 z-10">
-            <h1 className="text-emerald-500 font-black text-5xl tracking-tighter italic animate-in slide-in-from-bottom-4 duration-1000">
+          <div className="text-center space-y-4 z-10">
+            <h1 className="text-emerald-500 font-bold text-3xl tracking-tight animate-in slide-in-from-bottom-4 duration-1000">
               {settings.appName || 'PPHQ Finance'}
             </h1>
-            <div className="flex flex-col items-center gap-3">
-                <div className="flex gap-1.5 mb-2">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" />
+            <div className="flex flex-col items-center gap-2">
+                <div className="flex gap-1.5 mb-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" />
                 </div>
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.5em] ml-[0.5em]">Sistem Keuangan Digital</p>
+                <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.4em] ml-[0.4em]">Sistem Keuangan PPHQ</p>
             </div>
           </div>
         </div>
