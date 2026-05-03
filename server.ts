@@ -22,7 +22,9 @@ db.exec(`
     role TEXT,
     branchId TEXT,
     isActive INTEGER DEFAULT 1,
-    avatarUrl TEXT
+    avatarUrl TEXT,
+    unitHeadName TEXT,
+    unitTreasurerName TEXT
   );
 
   CREATE TABLE IF NOT EXISTS settings (
@@ -94,6 +96,8 @@ db.exec(`
 // Migration: Ensure columns exist for existing database
 try { db.exec("ALTER TABLE users ADD COLUMN password TEXT"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN avatarUrl TEXT"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN unitHeadName TEXT"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN unitTreasurerName TEXT"); } catch (e) {}
 try { db.exec("ALTER TABLE transactions ADD COLUMN item TEXT"); } catch (e) {}
 try { db.exec("ALTER TABLE transactions ADD COLUMN attachmentUrl TEXT"); } catch (e) {}
 
@@ -210,8 +214,8 @@ async function startServer() {
       // 3. User Actions
       if (action === "updateUser") {
         const { user } = payload;
-        db.prepare("UPDATE users SET name = ?, email = ?, password = ?, avatarUrl = ? WHERE id = ?")
-          .run(user.name, user.email, user.password, user.avatarUrl || null, user.id);
+        db.prepare("UPDATE users SET name = ?, email = ?, password = ?, avatarUrl = ?, unitHeadName = ?, unitTreasurerName = ? WHERE id = ?")
+          .run(user.name, user.email, user.password, user.avatarUrl || null, user.unitHeadName || null, user.unitTreasurerName || null, user.id);
         const updatedUser = db.prepare("SELECT * FROM users WHERE id = ?").get(user.id);
         return res.json({ status: "success", data: { user: updatedUser } });
       }
@@ -227,16 +231,16 @@ async function startServer() {
       if (action === "addUser") {
         const { user } = payload;
         const id = generateId();
-        db.prepare("INSERT INTO users (id, name, email, password, role, branchId, isActive, avatarUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-          .run(id, user.name, user.email, user.password, user.role, user.branchId, user.isActive ? 1 : 0, user.avatarUrl || null);
+        db.prepare("INSERT INTO users (id, name, email, password, role, branchId, isActive, avatarUrl, unitHeadName, unitTreasurerName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+          .run(id, user.name, user.email, user.password, user.role, user.branchId, user.isActive ? 1 : 0, user.avatarUrl || null, user.unitHeadName || null, user.unitTreasurerName || null);
         const newUser = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
         return res.json({ status: "success", data: { newUser } });
       }
 
       if (action === "updateUserByAdmin") {
         const { user } = payload;
-        db.prepare("UPDATE users SET name = ?, email = ?, password = COALESCE(?, password), role = ?, branchId = ?, isActive = ?, avatarUrl = ? WHERE id = ?")
-          .run(user.name, user.email, user.password || null, user.role, user.branchId, user.isActive ? 1 : 0, user.avatarUrl || null, user.id);
+        db.prepare("UPDATE users SET name = ?, email = ?, password = COALESCE(?, password), role = ?, branchId = ?, isActive = ?, avatarUrl = ?, unitHeadName = ?, unitTreasurerName = ? WHERE id = ?")
+          .run(user.name, user.email, user.password || null, user.role, user.branchId, user.isActive ? 1 : 0, user.avatarUrl || null, user.unitHeadName || null, user.unitTreasurerName || null, user.id);
         const updatedUser = db.prepare("SELECT * FROM users WHERE id = ?").get(user.id);
         return res.json({ status: "success", data: { updatedUser } });
       }

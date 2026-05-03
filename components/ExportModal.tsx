@@ -17,7 +17,7 @@ interface ExportModalProps {
 }
 
 const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions, branches, title, branchName, mode = 'detailed', students = [], selectedYear = new Date().getFullYear() }) => {
-    const { settings, showAlert } = useAppContext();
+    const { settings, showAlert, currentUser } = useAppContext();
     const [startDate, setStartDate] = useState(
         new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
     );
@@ -92,16 +92,16 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             try {
                 // Add Logo to the left
                 doc.addImage(settings.appLogoUrl, 'PNG', 14, 6, 20, 20);
-                
+
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(16);
                 doc.setTextColor(255, 255, 255);
                 doc.text(headerTitle, 38, 13);
-        
+
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
                 doc.text(mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch.toUpperCase(), 38, 20);
-        
+
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'normal');
                 doc.text(mode === 'summary' ? 'Summary Performance Per Cabang' : mode === 'syahriyah' ? `Tahun Buku ${selectedYear}` : 'Laporan Pemasukan & Pengeluaran Kas', 38, 26);
@@ -111,7 +111,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 doc.setFontSize(18);
                 doc.setTextColor(255, 255, 255);
                 doc.text(headerTitle, pageW / 2, 13, { align: 'center' });
-        
+
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
                 doc.text(mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch, pageW / 2, 21, { align: 'center' });
@@ -121,11 +121,11 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             doc.setFontSize(18);
             doc.setTextColor(255, 255, 255);
             doc.text(headerTitle, pageW / 2, 13, { align: 'center' });
-    
+
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch, pageW / 2, 21, { align: 'center' });
-    
+
             doc.setFontSize(8);
             doc.text(mode === 'summary' ? 'Summary Performance Per Cabang' : mode === 'syahriyah' ? `Tahun Buku ${selectedYear}` : 'Laporan Pemasukan & Pengeluaran Kas', pageW / 2, 27, { align: 'center' });
         }
@@ -175,7 +175,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                         if (t.item === s.id) return isCorrectPeriod;
                         return isCorrectPeriod && t.description.includes(s.name);
                     });
-                    rowData.push(p ? 'Lunas' : '-');
+                    rowData.push(p ? p.amount.toLocaleString('id-ID') : '-');
                 });
                 return rowData;
             });
@@ -193,7 +193,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 },
                 didDrawCell: (data) => {
                     if (data.column.index > 1 && data.section === 'body') {
-                        if (data.cell.text[0] === 'Lunas') {
+                        if (data.cell.text[0] !== '-') {
                             doc.setTextColor(16, 185, 129);
                             doc.setFont('helvetica', 'bold');
                         } else {
@@ -274,12 +274,40 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             doc.text('SALDO AKHIR:', sumX, finalY + 28);
             doc.setTextColor(finalBalance >= 0 ? 16 : 239, finalBalance >= 0 ? 185 : 68, finalBalance >= 0 ? 129 : 68);
             doc.text('Rp ' + finalBalance.toLocaleString('id-ID'), pageW - 18, finalY + 28, { align: 'right' });
+
+            // — Signature Area (4 Signatures Grid 2x2)
+            const sigY = finalY + 50;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(30, 41, 59);
+
+            const col1 = 30;
+            const col2 = pageW - 30;
+
+            // Row 1: Unit Level
+            doc.text('Bendahara Unit,', col1, sigY);
+            doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
+            doc.text(currentUser?.unitTreasurerName || '( ............................ )', col1, sigY + 23);
+
+            doc.text('Pimpinan Unit,', col2, sigY, { align: 'right' });
+            doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
+            doc.text(currentUser?.unitHeadName || '( ............................ )', col2, sigY + 23, { align: 'right' });
+
+            // Row 2: Center Level (Hardcoded)
+            const sigY2 = sigY + 40;
+            doc.text('Bendahara PPHQ,', col1, sigY2);
+            doc.line(col1, sigY2 + 18, col1 + 50, sigY2 + 18);
+            doc.text('Ibu Nyai H. Nur Kholidah', col1, sigY2 + 23);
+
+            doc.text('Pengasuh PPHQ,', col2, sigY2, { align: 'right' });
+            doc.line(col2 - 50, sigY2 + 18, col2, sigY2 + 18);
+            doc.text('KH. Ainul Yakin, SQ', col2, sigY2 + 23, { align: 'right' });
         }
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7);
         doc.setTextColor(148, 163, 184);
-        doc.text('Dokumen ini dihasilkan otomatis oleh Sistem Keuangan PPHQ', pageW / 2, 290, { align: 'center' });
+        doc.text('Dokumen ini dihasilkan otomatis oleh Sistem Keuangan PPHQ', pageW / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
 
         const filename = `${mode === 'syahriyah' ? 'Infaq_Bulanan' : mode === 'summary' ? 'Summary' : 'E-Statement'}_${displayBranch.replace(/\s/g, '_')}_${mode === 'syahriyah' ? selectedYear : startDate + '_sd_' + endDate}.pdf`;
         doc.save(filename);
@@ -333,38 +361,64 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             </div>
         </div>
         <div class="meta">
-            <span><strong>${mode === 'syahriyah' ? 'UNIT' : 'PERIODE'}:</strong> ${mode === 'syahriyah' ? displayBranch.toUpperCase() : new Date(startDate).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}) + ' – ' + new Date(endDate).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}</span>
+            <span><strong>${mode === 'syahriyah' ? 'UNIT' : 'PERIODE'}:</strong> ${mode === 'syahriyah' ? displayBranch.toUpperCase() : new Date(startDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) + ' – ' + new Date(endDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
             <span><strong>DICETAK:</strong> ${new Date().toLocaleString('id-ID')}</span>
         </div>
         <table><thead><tr><th>No</th>${mode === 'summary' ? '<th>Cabang</th><th>Pemasukan</th><th>Pengeluaran</th><th style="text-align:right">Saldo Bersih</th>' : mode === 'syahriyah' ? '<th>Nama Santri</th>' + [
-            'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-            'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-        ].map(m => `<th>${m}</th>`).join('') : '<th>Tanggal</th><th>Deskripsi</th><th>Kategori</th><th>Tipe</th><th style="text-align:right">Jumlah</th>'}</tr></thead>
-        <tbody>${mode === 'summary' ? getBranchSummary(filtered).map((s,i)=>`<tr><td>${i+1}</td><td>${s.name}</td><td class="in">Rp${s.income.toLocaleString('id-ID')}</td><td class="out">Rp${s.expense.toLocaleString('id-ID')}</td><td style="text-align:right;font-weight:700">Rp${s.balance.toLocaleString('id-ID')}</td></tr>`).join('') : mode === 'syahriyah' ? students.map((s, i) => {
-            const months = [
-                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-            ];
-            let cells = `<td>${i+1}</td><td>${s.name}</td>`;
-            months.forEach((_, mIdx) => {
-                const p = transactions.find(t => {
-                    const date = new Date(t.date);
-                    const isCorrectPeriod = t.description.includes(months[mIdx]) && date.getFullYear() === selectedYear;
-                    if (t.item === s.id) return isCorrectPeriod;
-                    return isCorrectPeriod && t.description.includes(s.name);
+                'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+                'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+            ].map(m => `<th>${m}</th>`).join('') : '<th>Tanggal</th><th>Deskripsi</th><th>Kategori</th><th>Tipe</th><th style="text-align:right">Jumlah</th>'}</tr></thead>
+        <tbody>${mode === 'summary' ? getBranchSummary(filtered).map((s, i) => `<tr><td>${i + 1}</td><td>${s.name}</td><td class="in">Rp${s.income.toLocaleString('id-ID')}</td><td class="out">Rp${s.expense.toLocaleString('id-ID')}</td><td style="text-align:right;font-weight:700">Rp${s.balance.toLocaleString('id-ID')}</td></tr>`).join('') : mode === 'syahriyah' ? students.map((s, i) => {
+                const months = [
+                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
+                let cells = `<td>${i + 1}</td><td>${s.name}</td>`;
+                months.forEach((_, mIdx) => {
+                    const p = transactions.find(t => {
+                        const date = new Date(t.date);
+                        const isCorrectPeriod = t.description.includes(months[mIdx]) && date.getFullYear() === selectedYear;
+                        if (t.item === s.id) return isCorrectPeriod;
+                        return isCorrectPeriod && t.description.includes(s.name);
+                    });
+                    cells += `<td class="${p ? 'lunas' : 'belum'}">${p ? p.amount.toLocaleString('id-ID') : '-'}</td>`;
                 });
-                cells += `<td class="${p ? 'lunas' : 'belum'}">${p ? 'Lunas' : '-'}</td>`;
-            });
-            return `<tr>${cells}</tr>`;
-        }).join('') : filtered.map((t,i)=>`<tr><td>${i+1}</td><td>${new Date(t.date).toLocaleDateString('id-ID')}</td><td>${t.description}</td><td>${t.category}</td><td class="${t.type===TransactionType.Income?'in':'out'}">${t.type===TransactionType.Income?'Masuk':'Keluar'}</td><td style="text-align:right" class="${t.type===TransactionType.Income?'in':'out'}">${t.type===TransactionType.Income?'+':'-'}Rp${t.amount.toLocaleString('id-ID')}</td></tr>`).join('')}</tbody></table>
+                return `<tr>${cells}</tr>`;
+            }).join('') : filtered.map((t, i) => `<tr><td>${i + 1}</td><td>${new Date(t.date).toLocaleDateString('id-ID')}</td><td>${t.description}</td><td>${t.category}</td><td class="${t.type === TransactionType.Income ? 'in' : 'out'}">${t.type === TransactionType.Income ? 'Masuk' : 'Keluar'}</td><td style="text-align:right" class="${t.type === TransactionType.Income ? 'in' : 'out'}">${t.type === TransactionType.Income ? '+' : '-'}Rp${t.amount.toLocaleString('id-ID')}</td></tr>`).join('')}</tbody></table>
         ${mode !== 'syahriyah' ? `
         <div class="summary-box">
             <div class="sum-row"><span>Saldo Awal (Sebelumnya)</span><span>Rp${openingBalance.toLocaleString('id-ID')}</span></div>
             <div class="sum-row"><span>Total Pemasukan Periode</span><span class="in">Rp${totalIncome.toLocaleString('id-ID')}</span></div>
             <div class="sum-row"><span>Total Pengeluaran Periode</span><span class="out">Rp${totalExpense.toLocaleString('id-ID')}</span></div>
-            <div class="sum-row total"><span>SALDO AKHIR</span><span style="color:${finalBalance>=0?'#10b981':'#ef4444'}">Rp${finalBalance.toLocaleString('id-ID')}</span></div>
+            <div class="sum-row total"><span>SALDO AKHIR</span><span style="color:${finalBalance >= 0 ? '#10b981' : '#ef4444'}">Rp${finalBalance.toLocaleString('id-ID')}</span></div>
         </div>
         ` : ''}
+        <div class="signature-section">
+            <div class="sig-box">
+                <div>Bendahara Unit,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">${currentUser?.unitTreasurerName || '............................'}</div>
+            </div>
+            <div class="sig-box">
+                <div>Pimpinan Unit,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">${currentUser?.unitHeadName || '............................'}</div>
+            </div>
+        </div>
+
+        <div class="signature-section" style="margin-top: 40px;">
+            <div class="sig-box">
+                <div>Bendahara PPHQ,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">Ibu Nyai H. Nur Kholidah</div>
+            </div>
+            <div class="sig-box">
+                <div>Pengasuh PPHQ,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">KH. Ainul Yakin, SQ</div>
+            </div>
+        </div>
+
         <div class="footer">Dokumen ini dihasilkan otomatis oleh Sistem Keuangan PPHQ</div>
         <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),800)}<\/script>
         </body></html>`;
@@ -378,7 +432,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
 
     const handleExportCSV = () => {
         const filtered = getFiltered();
-        if (filtered.length === 0) { showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "success"); return; }
+        if (filtered.length === 0) { showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "info"); return; }
 
         const openingBalance = getOpeningBalance();
         const totalIncome = filtered.filter(t => t.type === TransactionType.Income).reduce((s, t) => s + t.amount, 0);
@@ -406,7 +460,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             ].join('\n');
         } else if (mode === 'syahriyah') {
             csv = [
-                `\"LAPORAN INFAQ BULANAN PPHQ - ${displayBranch.toUpperCase()}\"` ,
+                `\"LAPORAN INFAQ BULANAN PPHQ - ${displayBranch.toUpperCase()}\"`,
                 `"Tahun Buku: ${selectedYear}"`,
                 `"Dicetak: ${new Date().toLocaleString('id-ID')}"`,
                 '',

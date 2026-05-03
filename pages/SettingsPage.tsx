@@ -40,6 +40,8 @@ const SettingsPage = () => {
     const [userAvatarUrl, setUserAvatarUrl] = useState(currentUser?.avatarUrl || '');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [unitHeadName, setUnitHeadName] = useState(currentUser?.unitHeadName || '');
+    const [unitTreasurerName, setUnitTreasurerName] = useState(currentUser?.unitTreasurerName || '');
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isCompressing, setIsCompressing] = useState(false);
 
@@ -186,7 +188,9 @@ const SettingsPage = () => {
                 ...currentUser, 
                 name: userName, 
                 email: userEmail,
-                avatarUrl: userAvatarUrl 
+                avatarUrl: userAvatarUrl,
+                unitHeadName,
+                unitTreasurerName
             };
             
             if (newPassword) {
@@ -264,6 +268,29 @@ const SettingsPage = () => {
                                         type="email" 
                                         value={userEmail} 
                                         onChange={e => setUserEmail(e.target.value)}
+                                        className="mt-2 w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nama Pimpinan Unit</label>
+                                    <input 
+                                        type="text" 
+                                        value={unitHeadName} 
+                                        onChange={e => setUnitHeadName(e.target.value)}
+                                        placeholder="Contoh: Bpk. H. Ahmad"
+                                        className="mt-2 w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nama Bendahara Unit</label>
+                                    <input 
+                                        type="text" 
+                                        value={unitTreasurerName} 
+                                        onChange={e => setUnitTreasurerName(e.target.value)}
+                                        placeholder="Contoh: Ibu Hj. Siti"
                                         className="mt-2 w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700"
                                     />
                                 </div>

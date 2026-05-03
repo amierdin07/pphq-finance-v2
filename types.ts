@@ -24,6 +24,8 @@ export interface User {
   branchId: string;
   isActive: boolean;
   avatarUrl?: string;
+  unitHeadName?: string;
+  unitTreasurerName?: string;
 }
 
 export interface AppSettings {
