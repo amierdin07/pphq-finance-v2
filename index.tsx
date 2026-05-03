@@ -1,10 +1,12 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { HashRouter } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { registerSW } from 'virtual:pwa-register'
+
+registerSW({ immediate: true })
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
