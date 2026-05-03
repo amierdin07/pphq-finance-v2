@@ -95,15 +95,17 @@ function App() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-50 rounded-full blur-3xl opacity-60 animate-pulse" />
 
           <div className="relative z-10">
-             {settings.appLogoUrl ? (
-               <div className="w-40 h-40 bg-white rounded-[3.5rem] shadow-2xl flex items-center justify-center p-6 border-8 border-slate-50 animate-in zoom-in duration-1000">
-                <img src={settings.appLogoUrl} alt="Loading" className="max-w-full max-h-full object-contain" />
-               </div>
-             ) : (
-               <div className="w-40 h-40 bg-emerald-500 rounded-[3.5rem] shadow-2xl flex items-center justify-center animate-in zoom-in duration-1000 border-8 border-white">
-                <Logo className="w-20 h-20 text-white" />
-               </div>
-             )}
+             <div className="w-40 h-40 bg-white rounded-[3.5rem] shadow-2xl flex items-center justify-center p-6 border-8 border-slate-50 animate-in zoom-in duration-1000">
+                <img 
+                    src="/pwa-icon.png" 
+                    alt="Loading" 
+                    className="max-w-full max-h-full object-contain" 
+                    onError={(e) => {
+                        // Fallback jika file belum ada
+                        e.currentTarget.src = 'https://ui-avatars.com/api/?name=PPHQ&background=10b981&color=fff';
+                    }}
+                />
+             </div>
              
              {/* Fancy orbital spinner around the logo */}
              <div className="absolute -inset-6 border-2 border-dashed border-emerald-200 rounded-[4rem] animate-spin duration-[15s]" />

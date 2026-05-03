@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'PPHQ Finance',
         short_name: 'PPHQ Finance',
         description: 'Sistem Keuangan PPHQ Digital',
-        theme_color: '#10b981',
-        background_color: '#f8fafc',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         icons: [
           {
