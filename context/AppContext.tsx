@@ -131,16 +131,20 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const refreshAllData = useCallback(async () => {
         if (currentUser) {
             try {
-                const data = await callApi('getAllData');
-                setUsers((data.users || []).map((u: any) => ({ ...u, isActive: !!u.isActive })));
-                setBranches(data.branches || []);
-                setCategories(data.categories || []);
-                setStudents((data.students || []).map((s: any) => ({ ...s, isActive: !!s.isActive })));
-                setAllTransactions(data.allTransactions || []);
-                if (data.settings) {
-                    setSettings(data.settings);
+                // Fetch data in parallel to save time
+                const [allData, annData] = await Promise.all([
+                    callApi('getAllData'),
+                    callApi('getAnnouncements', { userId: currentUser.id })
+                ]);
+
+                setUsers((allData.users || []).map((u: any) => ({ ...u, isActive: !!u.isActive })));
+                setBranches(allData.branches || []);
+                setCategories(allData.categories || []);
+                setStudents((allData.students || []).map((s: any) => ({ ...s, isActive: !!s.isActive })));
+                setAllTransactions(allData.allTransactions || []);
+                if (allData.settings) {
+                    setSettings(allData.settings);
                 }
-                const annData = await callApi('getAnnouncements', { userId: currentUser.id });
                 setAnnouncements(annData.announcements || []);
             } catch (error) {
                 console.error("Refresh failed:", error);
@@ -155,7 +159,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 await refreshAllData();
                 setIsLoading(false);
             } else {
-                setIsLoading(false);
+                // Short delay to ensure smooth transition even if no user
+                setTimeout(() => setIsLoading(false), 300);
             }
         };
 
