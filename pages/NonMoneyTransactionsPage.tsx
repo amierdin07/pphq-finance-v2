@@ -71,7 +71,7 @@ const NonMoneyTransactionsPage = () => {
         });
 
         if (toExport.length === 0) {
-            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "info");
+            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "success");
             return;
         }
 
@@ -141,7 +141,7 @@ const NonMoneyTransactionsPage = () => {
         });
 
         if (toExport.length === 0) {
-            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "info");
+            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "success");
             return;
         }
 
@@ -195,7 +195,7 @@ const NonMoneyTransactionsPage = () => {
         });
 
         if (toExport.length === 0) {
-            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "info");
+            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "success");
             return;
         }
 

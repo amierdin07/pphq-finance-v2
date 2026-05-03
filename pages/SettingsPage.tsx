@@ -244,7 +244,6 @@ const SettingsPage = () => {
                                 </div>
                                 <div className="flex-grow space-y-1 text-center sm:text-left">
                                     <p className="text-sm font-bold text-slate-700">{currentUser?.email}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{currentUser?.role} • {currentUser?.role === Role.Admin ? 'Super Admin' : `unit ID: ${currentUser?.branchId}`}</p>
                                     {isCompressing && <p className="text-[10px] text-emerald-600 font-bold animate-pulse">Memproses gambar...</p>}
                                 </div>
                             </div>
@@ -260,7 +259,7 @@ const SettingsPage = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Alamat Email</label>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">User</label>
                                     <input 
                                         type="email" 
                                         value={userEmail} 

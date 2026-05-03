@@ -32,7 +32,7 @@ const Branches = () => {
 
     const downloadAllCredentials = () => {
         const branchUsers = users.filter(u => u.role !== Role.Admin || u.id !== currentUser?.id);
-        if (branchUsers.length === 0) return showAlert('Data Kosong', 'Tidak ada data pengguna untuk didownload.', 'info');
+        if (branchUsers.length === 0) return showAlert('Data Kosong', 'Tidak ada data pengguna untuk didownload.', 'success');
 
         let content = `DAFTAR LOGIN SEMUA UNIT PPHQ\n`;
         content += `Dicetak pada: ${new Date().toLocaleString('id-ID')}\n\n`;

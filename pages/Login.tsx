@@ -47,7 +47,7 @@ const Login = () => {
           </div>
           
           <div className="mt-8 text-center">
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+            <h2 className="text-3xl font-black text-emerald-600 tracking-tight">
               {settings.appName || 'PPHQ Finance'}
             </h2>
             <p className="mt-2 text-sm font-medium text-slate-400 max-w-[240px] mx-auto uppercase tracking-widest leading-relaxed">
@@ -59,7 +59,7 @@ const Login = () => {
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label htmlFor="email" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-              Alamat Email
+              User
             </label>
             <input
                 id="email"
@@ -108,7 +108,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-4 bg-slate-800 text-white font-bold rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-900 hover:translate-y-[-2px] active:translate-y-[0px] transition-all disabled:opacity-50 disabled:translate-y-0"
+            className="w-full flex justify-center py-4 bg-emerald-500 text-white font-bold rounded-2xl shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 hover:translate-y-[-2px] active:translate-y-[0px] transition-all disabled:opacity-50 disabled:translate-y-0"
           >
             {isLoading ? (
                 <div className="flex items-center gap-2">

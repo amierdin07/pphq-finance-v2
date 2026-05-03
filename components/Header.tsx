@@ -66,7 +66,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     <Link to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <div className="text-right">
                             <p className="text-[11px] md:text-sm font-bold text-slate-800 leading-none truncate max-w-[100px] md:max-w-none">{currentUser?.name}</p>
-                            <p className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{currentUser?.role === Role.Admin ? 'Admin' : 'Unit'}</p>
                         </div>
                         <img
                             src={currentUser?.avatarUrl || `https://i.pravatar.cc/40?u=${currentUser?.id}`}
@@ -75,7 +74,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                         />
                     </Link>
                     <button 
-                        onClick={() => showConfirm('Keluar Aplikasi?', 'Apakah Anda yakin ingin keluar dari akun ini?', logout, 'info', 'Ya, Keluar')} 
+                        onClick={() => showConfirm('Keluar Aplikasi?', 'Apakah Anda yakin ingin keluar dari akun ini?', logout, 'success', 'Ya, Keluar')} 
                         className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" 
                         title="Logout"
                     >

@@ -70,7 +70,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
     const handleDownloadPDF = () => {
         const filtered = getFiltered();
         if (filtered.length === 0) {
-            showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "info");
+            showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "success");
             return;
         }
 
@@ -378,7 +378,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
 
     const handleExportCSV = () => {
         const filtered = getFiltered();
-        if (filtered.length === 0) { showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "info"); return; }
+        if (filtered.length === 0) { showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "success"); return; }
 
         const openingBalance = getOpeningBalance();
         const totalIncome = filtered.filter(t => t.type === TransactionType.Income).reduce((s, t) => s + t.amount, 0);
