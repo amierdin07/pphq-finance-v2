@@ -284,24 +284,35 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             const col1 = 30;
             const col2 = pageW - 30;
 
-            // Row 1: Unit Level
-            doc.text('Bendahara Unit,', col1, sigY);
-            doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
-            doc.text(currentUser?.unitTreasurerName || '( ............................ )', col1, sigY + 23);
+            if (mode === 'summary') {
+                // Only Center signatures for summary report
+                doc.text('Pengasuh PPHQ,', col1, sigY);
+                doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
+                doc.text('KH. Ainul Yakin, SQ', col1, sigY + 23);
 
-            doc.text('Pimpinan Unit,', col2, sigY, { align: 'right' });
-            doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
-            doc.text(currentUser?.unitHeadName || '( ............................ )', col2, sigY + 23, { align: 'right' });
+                doc.text('Bendahara PPHQ,', col2, sigY, { align: 'right' });
+                doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
+                doc.text('Ibu Nyai H. Nur Kholidah', col2, sigY + 23, { align: 'right' });
+            } else {
+                // Row 1: Unit Level (Head Left, Treasurer Right)
+                doc.text('Pimpinan Unit,', col1, sigY);
+                doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
+                doc.text(currentUser?.unitHeadName || '( ............................ )', col1, sigY + 23);
 
-            // Row 2: Center Level (Hardcoded)
-            const sigY2 = sigY + 40;
-            doc.text('Bendahara PPHQ,', col1, sigY2);
-            doc.line(col1, sigY2 + 18, col1 + 50, sigY2 + 18);
-            doc.text('Ibu Nyai H. Nur Kholidah', col1, sigY2 + 23);
+                doc.text('Bendahara Unit,', col2, sigY, { align: 'right' });
+                doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
+                doc.text(currentUser?.unitTreasurerName || '( ............................ )', col2, sigY + 23, { align: 'right' });
 
-            doc.text('Pengasuh PPHQ,', col2, sigY2, { align: 'right' });
-            doc.line(col2 - 50, sigY2 + 18, col2, sigY2 + 18);
-            doc.text('KH. Ainul Yakin, SQ', col2, sigY2 + 23, { align: 'right' });
+                // Row 2: Center Level (Pengasuh Left, Treasurer Right)
+                const sigY2 = sigY + 40;
+                doc.text('Pengasuh PPHQ,', col1, sigY2);
+                doc.line(col1, sigY2 + 18, col1 + 50, sigY2 + 18);
+                doc.text('KH. Ainul Yakin, SQ', col1, sigY2 + 23);
+
+                doc.text('Bendahara PPHQ,', col2, sigY2, { align: 'right' });
+                doc.line(col2 - 50, sigY2 + 18, col2, sigY2 + 18);
+                doc.text('Ibu Nyai H. Nur Kholidah', col2, sigY2 + 23, { align: 'right' });
+            }
         }
 
         doc.setFont('helvetica', 'normal');
@@ -393,31 +404,46 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             <div class="sum-row total"><span>SALDO AKHIR</span><span style="color:${finalBalance >= 0 ? '#10b981' : '#ef4444'}">Rp${finalBalance.toLocaleString('id-ID')}</span></div>
         </div>
         ` : ''}
+        ${mode === 'summary' ? `
         <div class="signature-section">
-            <div class="sig-box">
-                <div>Bendahara Unit,</div>
-                <div class="sig-space"></div>
-                <div class="sig-name">${currentUser?.unitTreasurerName || '............................'}</div>
-            </div>
-            <div class="sig-box">
-                <div>Pimpinan Unit,</div>
-                <div class="sig-space"></div>
-                <div class="sig-name">${currentUser?.unitHeadName || '............................'}</div>
-            </div>
-        </div>
-
-        <div class="signature-section" style="margin-top: 40px;">
-            <div class="sig-box">
-                <div>Bendahara PPHQ,</div>
-                <div class="sig-space"></div>
-                <div class="sig-name">Ibu Nyai H. Nur Kholidah</div>
-            </div>
             <div class="sig-box">
                 <div>Pengasuh PPHQ,</div>
                 <div class="sig-space"></div>
                 <div class="sig-name">KH. Ainul Yakin, SQ</div>
             </div>
+            <div class="sig-box">
+                <div>Bendahara PPHQ,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">Ibu Nyai H. Nur Kholidah</div>
+            </div>
         </div>
+        ` : `
+        <div class="signature-section">
+            <div class="sig-box">
+                <div>Pimpinan Unit,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">${currentUser?.unitHeadName || '............................'}</div>
+            </div>
+            <div class="sig-box">
+                <div>Bendahara Unit,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">${currentUser?.unitTreasurerName || '............................'}</div>
+            </div>
+        </div>
+
+        <div class="signature-section" style="margin-top: 40px;">
+            <div class="sig-box">
+                <div>Pengasuh PPHQ,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">KH. Ainul Yakin, SQ</div>
+            </div>
+            <div class="sig-box">
+                <div>Bendahara PPHQ,</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">Ibu Nyai H. Nur Kholidah</div>
+            </div>
+        </div>
+        `}
 
         <div class="footer">Dokumen ini dihasilkan otomatis oleh Sistem Keuangan PPHQ</div>
         <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),800)}<\/script>
