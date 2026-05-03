@@ -18,15 +18,20 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: 'icon.svg',
-            sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            src: 'pwa-icon.png',
+            sizes: '192x192',
+            type: 'image/png'
           },
           {
-            src: 'icon.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml'
+            src: 'pwa-icon.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-icon.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
