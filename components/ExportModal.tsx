@@ -141,6 +141,28 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         doc.text(periodText, 19, 43);
         doc.text(printedText, pageW - 19, 43, { align: 'right' });
 
+        // — Watermark Logo (Transparent Background)
+        if (settings.appLogoUrl) {
+            try {
+                // Save current state for opacity
+                const opacity = 0.05;
+                const imgW = 100;
+                const imgH = 100;
+                const x = (pageW - imgW) / 2;
+                const y = (pageH - imgH) / 2;
+                
+                // Using GState for transparency in jsPDF
+                // @ts-ignore
+                doc.setGState(new (doc as any).GState({ opacity }));
+                doc.addImage(settings.appLogoUrl, 'PNG', x, y, imgW, imgH);
+                // Reset GState/Opacity for text
+                // @ts-ignore
+                doc.setGState(new (doc as any).GState({ opacity: 1 }));
+            } catch (e) {
+                console.warn("Watermark error:", e);
+            }
+        }
+
         if (mode === 'summary') {
             const summaryData = getBranchSummary(filtered);
             const rows = summaryData.map((s, i) => [
@@ -385,6 +407,28 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         doc.roundedRect(14, 36, pageW - 28, 12, 3, 3, 'F');
         doc.text(periodText, 19, 43);
         doc.text(printedText, pageW - 19, 43, { align: 'right' });
+
+        // — Watermark Logo (Transparent Background)
+        if (settings.appLogoUrl) {
+            try {
+                // Save current state for opacity
+                const opacity = 0.05;
+                const imgW = 100;
+                const imgH = 100;
+                const x = (pageW - imgW) / 2;
+                const y = (pageH - imgH) / 2;
+                
+                // Using GState for transparency in jsPDF
+                // @ts-ignore
+                doc.setGState(new (doc as any).GState({ opacity }));
+                doc.addImage(settings.appLogoUrl, 'PNG', x, y, imgW, imgH);
+                // Reset GState/Opacity for text
+                // @ts-ignore
+                doc.setGState(new (doc as any).GState({ opacity: 1 }));
+            } catch (e) {
+                console.warn("Watermark error:", e);
+            }
+        }
 
         // — Table
         if (mode === 'summary') {
