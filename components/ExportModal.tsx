@@ -575,7 +575,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                             if (t.item === s.id) return isCorrectPeriod;
                             return isCorrectPeriod && t.description.includes(s.name);
                         });
-                        row.push(p ? `"${p.amount}"` : '"-"');
+                        row.push(p ? `"Rp ${p.amount.toLocaleString('id-ID')}"` : '"-"');
                     });
                     return row.join(',');
                 })
