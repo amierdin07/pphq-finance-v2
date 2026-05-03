@@ -89,41 +89,47 @@ function App() {
   if (!context || context.isLoading) {
     const { settings } = context || { settings: {} };
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-8">
-          <div className="relative">
+      <div className="flex h-screen w-full items-center justify-center bg-white overflow-hidden">
+        <div className="flex flex-col items-center gap-12 relative">
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-50 rounded-full blur-3xl opacity-60 animate-pulse" />
+
+          <div className="relative z-10">
              {settings.appLogoUrl ? (
-               <div className="w-28 h-28 bg-white rounded-[2.5rem] shadow-2xl flex items-center justify-center p-5 border-4 border-emerald-50 animate-pulse transition-all duration-1000">
+               <div className="w-40 h-40 bg-white rounded-[3.5rem] shadow-2xl flex items-center justify-center p-6 border-8 border-slate-50 animate-in zoom-in duration-1000">
                 <img src={settings.appLogoUrl} alt="Loading" className="max-w-full max-h-full object-contain" />
                </div>
              ) : (
-               <div className="p-8 bg-emerald-500 rounded-[2.5rem] shadow-2xl animate-bounce border-4 border-white">
-                <Logo className="w-14 h-14 text-white" />
+               <div className="w-40 h-40 bg-emerald-500 rounded-[3.5rem] shadow-2xl flex items-center justify-center animate-in zoom-in duration-1000 border-8 border-white">
+                <Logo className="w-20 h-20 text-white" />
                </div>
              )}
              
              {/* Fancy orbital spinner around the logo */}
-             <div className="absolute -inset-4 border-2 border-dashed border-emerald-100 rounded-[3rem] animate-spin duration-[10s]" />
+             <div className="absolute -inset-6 border-2 border-dashed border-emerald-200 rounded-[4rem] animate-spin duration-[15s]" />
+             <div className="absolute -inset-10 border border-slate-100 rounded-[5rem] animate-reverse-spin duration-[20s]" />
              
              <div className="absolute -bottom-2 -right-2">
-                <div className="flex h-8 w-8">
+                <div className="flex h-10 w-10">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-8 w-8 bg-emerald-500 shadow-lg flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  <span className="relative inline-flex rounded-full h-10 w-10 bg-emerald-500 shadow-xl flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
                   </span>
                 </div>
              </div>
           </div>
           
-          <div className="text-center space-y-2">
-            <h2 className="text-slate-800 font-black text-2xl tracking-tight">Memuat Data...</h2>
-            <div className="flex items-center justify-center gap-2">
-                <div className="flex gap-1">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" />
+          <div className="text-center space-y-6 z-10">
+            <h1 className="text-emerald-500 font-black text-5xl tracking-tighter italic animate-in slide-in-from-bottom-4 duration-1000">
+              {settings.appName || 'PPHQ Finance'}
+            </h1>
+            <div className="flex flex-col items-center gap-3">
+                <div className="flex gap-1.5 mb-2">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" />
                 </div>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">{settings.appName || 'PPHQ Finance'}</p>
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.5em] ml-[0.5em]">Sistem Keuangan Digital</p>
             </div>
           </div>
         </div>
