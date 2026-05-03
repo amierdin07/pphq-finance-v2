@@ -21,6 +21,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     cancelText = 'Batal',
     type = 'danger'
 }) => {
+    if (!isOpen) return null;
+
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[999] flex items-center justify-center p-4 animate-in fade-in duration-500">
             <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
