@@ -91,7 +91,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         if (settings.appLogoUrl) {
             try {
                 // Add Logo to the left
-                doc.addImage(settings.appLogoUrl, 'PNG', 14, 6, 20, 20);
+                doc.addImage(settings.appLogoUrl, 'JPEG', 14, 6, 20, 20, undefined, 'FAST');
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(16);
@@ -144,20 +144,19 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         // — Watermark Logo (Transparent Background)
         if (settings.appLogoUrl) {
             try {
-                // Save current state for opacity
-                const opacity = 0.05;
-                const imgW = 100;
-                const imgH = 100;
+                const opacity = 0.1;
+                const imgW = 80;
+                const imgH = 80;
                 const x = (pageW - imgW) / 2;
                 const y = (pageH - imgH) / 2;
                 
-                // Using GState for transparency in jsPDF
+                // @ts-ignore
+                doc.saveGraphicsState();
                 // @ts-ignore
                 doc.setGState(new (doc as any).GState({ opacity }));
-                doc.addImage(settings.appLogoUrl, 'PNG', x, y, imgW, imgH);
-                // Reset GState/Opacity for text
+                doc.addImage(settings.appLogoUrl, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
                 // @ts-ignore
-                doc.setGState(new (doc as any).GState({ opacity: 1 }));
+                doc.restoreGraphicsState();
             } catch (e) {
                 console.warn("Watermark error:", e);
             }
@@ -380,7 +379,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         const headerTitle = mode === 'syahriyah' ? 'LAPORAN INFAQ BULANAN PPHQ' : 'E-STATEMENT PPHQ FINANCE';
         if (settings.appLogoUrl) {
             try {
-                doc.addImage(settings.appLogoUrl, 'PNG', 14, 6, 20, 20);
+                doc.addImage(settings.appLogoUrl, 'JPEG', 14, 6, 20, 20, undefined, 'FAST');
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(16);
                 doc.setTextColor(255, 255, 255);
@@ -411,20 +410,19 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         // — Watermark Logo (Transparent Background)
         if (settings.appLogoUrl) {
             try {
-                // Save current state for opacity
-                const opacity = 0.05;
-                const imgW = 100;
-                const imgH = 100;
+                const opacity = 0.1;
+                const imgW = 80;
+                const imgH = 80;
                 const x = (pageW - imgW) / 2;
                 const y = (pageH - imgH) / 2;
                 
-                // Using GState for transparency in jsPDF
+                // @ts-ignore
+                doc.saveGraphicsState();
                 // @ts-ignore
                 doc.setGState(new (doc as any).GState({ opacity }));
-                doc.addImage(settings.appLogoUrl, 'PNG', x, y, imgW, imgH);
-                // Reset GState/Opacity for text
+                doc.addImage(settings.appLogoUrl, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
                 // @ts-ignore
-                doc.setGState(new (doc as any).GState({ opacity: 1 }));
+                doc.restoreGraphicsState();
             } catch (e) {
                 console.warn("Watermark error:", e);
             }
