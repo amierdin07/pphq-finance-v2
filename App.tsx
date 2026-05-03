@@ -98,12 +98,8 @@ function App() {
              <div className="w-40 h-40 bg-white rounded-[3.5rem] shadow-2xl flex items-center justify-center p-6 border-8 border-slate-50 animate-in zoom-in duration-1000">
                 <img 
                     src="/pwa-icon.png" 
-                    alt="Loading" 
+                    alt="PPHQ Logo" 
                     className="max-w-full max-h-full object-contain" 
-                    onError={(e) => {
-                        // Fallback jika file belum ada
-                        e.currentTarget.src = 'https://ui-avatars.com/api/?name=PPHQ&background=10b981&color=fff';
-                    }}
                 />
              </div>
              
