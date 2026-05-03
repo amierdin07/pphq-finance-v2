@@ -285,14 +285,14 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             const col2 = pageW - 30;
 
             if (mode === 'summary') {
-                // Only Center signatures for summary report
-                doc.text('Pengasuh PPHQ,', col1, sigY);
+                // Only Center signatures for summary report (Only 2 at the bottom)
+                doc.text('Bendahara PPHQ,', col1, sigY);
                 doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
-                doc.text('KH. Ainul Yakin, SQ', col1, sigY + 23);
+                doc.text('Ibu Nyai H. Nur Kholidah', col1, sigY + 23);
 
-                doc.text('Bendahara PPHQ,', col2, sigY, { align: 'right' });
+                doc.text('Pengasuh PPHQ,', col2, sigY, { align: 'right' });
                 doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
-                doc.text('Ibu Nyai H. Nur Kholidah', col2, sigY + 23, { align: 'right' });
+                doc.text('KH. Ainul Yakin, SQ', col2, sigY + 23, { align: 'right' });
             } else {
                 // Row 1: Unit Level (Head Left, Treasurer Right)
                 doc.text('Pimpinan Unit,', col1, sigY);
@@ -482,12 +482,12 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             doc.setTextColor(30, 41, 59);
 
             if (mode === 'summary') {
-                doc.text('Pengasuh PPHQ,', col1, sigY);
+                doc.text('Bendahara PPHQ,', col1, sigY);
                 doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
-                doc.text('KH. Ainul Yakin, SQ', col1, sigY + 23);
-                doc.text('Bendahara PPHQ,', col2, sigY, { align: 'right' });
+                doc.text('Ibu Nyai H. Nur Kholidah', col1, sigY + 23);
+                doc.text('Pengasuh PPHQ,', col2, sigY, { align: 'right' });
                 doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
-                doc.text('Ibu Nyai H. Nur Kholidah', col2, sigY + 23, { align: 'right' });
+                doc.text('KH. Ainul Yakin, SQ', col2, sigY + 23, { align: 'right' });
             } else {
                 doc.text('Pimpinan Unit,', col1, sigY);
                 doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
