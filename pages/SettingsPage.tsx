@@ -19,7 +19,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
 const SettingsPage = () => {
-    const { currentUser, allTransactions, settings, updateSettings, updateUser, logout, resetData } = useAppContext();
+    const { currentUser, allTransactions, settings, updateSettings, updateUser, logout, resetData, showAlert } = useAppContext();
     const [token, setToken] = useState<string | null>(localStorage.getItem('google_access_token'));
     const [profile, setProfile] = useState<any | null>(JSON.parse(localStorage.getItem('google_profile') || 'null'));
     const [isSyncing, setIsSyncing] = useState(false);
@@ -82,7 +82,7 @@ const SettingsPage = () => {
             if (type === 'logo') setAppLogoUrl(compressed);
             else setUserAvatarUrl(compressed);
         } catch (error) {
-            alert("Gagal memproses gambar.");
+            showAlert("Error", "Gagal memproses gambar.", "danger");
         } finally {
             setIsCompressing(false);
         }
@@ -164,9 +164,9 @@ const SettingsPage = () => {
         setIsSavingBranding(true);
         try {
             await updateSettings({ appLogoUrl, appName, appSubtitle });
-            alert('Pengaturan tampilan berhasil disimpan.');
+            showAlert("Berhasil", 'Pengaturan tampilan berhasil disimpan.', "success");
         } catch (error) {
-            alert('Gagal menyimpan pengaturan.');
+            showAlert("Gagal", 'Gagal menyimpan pengaturan.', "danger");
         } finally {
             setIsSavingBranding(false);
         }
@@ -176,7 +176,7 @@ const SettingsPage = () => {
         if (!currentUser) return;
         
         if (newPassword && newPassword !== confirmPassword) {
-            alert('Konfirmasi kata sandi tidak cocok.');
+            showAlert("Password Tidak Cocok", 'Konfirmasi kata sandi tidak cocok.', "danger");
             return;
         }
 
@@ -194,11 +194,11 @@ const SettingsPage = () => {
             }
 
             await updateUser(updateData);
-            alert('Profil berhasil diperbarui.');
+            showAlert("Berhasil", 'Profil berhasil diperbarui.', "success");
             setNewPassword('');
             setConfirmPassword('');
         } catch (error) {
-            alert('Gagal memperbarui profil.');
+            showAlert("Gagal", 'Gagal memperbarui profil.', "danger");
         } finally {
             setIsSavingProfile(false);
         }

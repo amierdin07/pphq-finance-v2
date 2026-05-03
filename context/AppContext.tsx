@@ -79,6 +79,7 @@ const defaultContextValue: AppContextType = {
     type: 'danger'
   },
   showConfirm: () => {},
+  showAlert: () => {},
   closeConfirm: () => {},
   refreshAllData: async () => {},
 };
@@ -169,14 +170,15 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         }
     }, [currentUser]);
 
-    // Confirmation Modal State
     const [confirmState, setConfirmState] = useState<{
         isOpen: boolean;
         title: string;
         message: string;
         onConfirm: () => void;
+        onCancel?: () => void;
         type: 'danger' | 'info' | 'success';
         confirmText?: string;
+        cancelText?: string;
     }>({
         isOpen: false,
         title: '',
@@ -194,8 +196,25 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
                 onConfirm();
                 setConfirmState(prev => ({ ...prev, isOpen: false }));
             },
+            onCancel: () => {
+                setConfirmState(prev => ({ ...prev, isOpen: false }));
+            },
             type,
             confirmText
+        });
+    }, []);
+
+    const showAlert = useCallback((title: string, message: string, type: 'danger' | 'info' | 'success' = 'success') => {
+        setConfirmState({
+            isOpen: true,
+            title,
+            message,
+            onConfirm: () => {
+                setConfirmState(prev => ({ ...prev, isOpen: false }));
+            },
+            onCancel: undefined, // No cancel button for alerts
+            type,
+            confirmText: 'Sip, Oke'
         });
     }, []);
 
@@ -381,6 +400,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             settings,
             confirmState,
             showConfirm,
+            showAlert,
             closeConfirm,
             globalSearchTerm,
             setGlobalSearchTerm,

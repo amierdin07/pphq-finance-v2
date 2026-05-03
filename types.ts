@@ -126,10 +126,13 @@ export interface AppContextType {
     title: string;
     message: string;
     onConfirm: () => void;
+    onCancel?: () => void;
     type: 'danger' | 'info' | 'success';
     confirmText?: string;
+    cancelText?: string;
   };
   showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'info' | 'success', confirmText?: string) => void;
+  showAlert: (title: string, message: string, type?: 'danger' | 'info' | 'success') => void;
   closeConfirm: () => void;
   refreshAllData: () => Promise<void>;
 }

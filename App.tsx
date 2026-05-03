@@ -151,7 +151,7 @@ function App() {
             <Route path="cash-flow" element={<CashFlow />} />
             <Route path="income-non-money" element={<NonMoneyTransactionsPage />} />
             <Route path="profile" element={<SettingsPage />} />
-            <Route path="syahriyah" element={<SyahriyahPage />} />
+            <Route path="infaq-bulanan" element={<SyahriyahPage />} />
   
             {/* BranchUser specific routes */}
             {currentUser?.role === Role.BranchUser && (
@@ -181,9 +181,10 @@ function App() {
           title={confirmState.title}
           message={confirmState.message}
           onConfirm={confirmState.onConfirm}
-          onCancel={closeConfirm}
+          onCancel={confirmState.onCancel || closeConfirm}
           type={confirmState.type}
           confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
       />
     </>
   );

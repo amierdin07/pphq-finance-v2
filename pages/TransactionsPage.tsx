@@ -12,7 +12,7 @@ interface TransactionsPageProps {
 }
 
 const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = TransactionNature.Money }) => {
-    const { transactions, categories, addTransaction, updateTransaction, deleteTransaction, currentUser, globalSearchTerm, showConfirm } = useAppContext();
+    const { transactions, categories, addTransaction, updateTransaction, deleteTransaction, currentUser, globalSearchTerm, showConfirm, showAlert } = useAppContext();
     const location = useLocation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +63,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
             setFormState(prev => ({ ...prev, attachmentUrl: compressed }));
         } catch (error) {
             console.error("Compression failed", error);
-            alert("Gagal memproses gambar.");
+            showAlert("Error", "Gagal memproses gambar.", "danger");
         } finally {
             setIsCompressing(false);
             e.target.value = '';
@@ -110,7 +110,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
         e.preventDefault();
         const numericAmount = parseCurrencyInput(formState.amount);
         if (!formState.category || !formState.description || numericAmount <= 0) {
-            alert('Harap isi semua kolom dengan benar.');
+            showAlert("Peringatan", 'Harap isi semua kolom dengan benar.', "danger");
             return;
         }
 

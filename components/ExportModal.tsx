@@ -17,7 +17,7 @@ interface ExportModalProps {
 }
 
 const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions, branches, title, branchName, mode = 'detailed', students = [], selectedYear = new Date().getFullYear() }) => {
-    const { settings } = useAppContext();
+    const { settings, showAlert } = useAppContext();
     const [startDate, setStartDate] = useState(
         new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
     );
@@ -70,7 +70,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
     const handleDownloadPDF = () => {
         const filtered = getFiltered();
         if (filtered.length === 0) {
-            alert('Tidak ada data pada rentang tanggal tersebut.');
+            showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "info");
             return;
         }
 
@@ -87,7 +87,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         doc.rect(0, 0, pageW, 32, 'F');
 
         // — Title & Logo (Kop)
-        const headerTitle = mode === 'syahriyah' ? 'LAPORAN SYAHRIYAH PPHQ' : 'E-STATEMENT PPHQ FINANCE';
+        const headerTitle = mode === 'syahriyah' ? 'LAPORAN INFAQ BULANAN PPHQ' : 'E-STATEMENT PPHQ FINANCE';
         if (settings.appLogoUrl) {
             try {
                 // Add Logo to the left
@@ -281,7 +281,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         doc.setTextColor(148, 163, 184);
         doc.text('Dokumen ini dihasilkan otomatis oleh Sistem Keuangan PPHQ', pageW / 2, 290, { align: 'center' });
 
-        const filename = `${mode === 'syahriyah' ? 'Syahriyah' : mode === 'summary' ? 'Summary' : 'E-Statement'}_${displayBranch.replace(/\s/g, '_')}_${mode === 'syahriyah' ? selectedYear : startDate + '_sd_' + endDate}.pdf`;
+        const filename = `${mode === 'syahriyah' ? 'Infaq_Bulanan' : mode === 'summary' ? 'Summary' : 'E-Statement'}_${displayBranch.replace(/\s/g, '_')}_${mode === 'syahriyah' ? selectedYear : startDate + '_sd_' + endDate}.pdf`;
         doc.save(filename);
         onClose();
     };
@@ -327,7 +327,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         <div class="header-bar">
             ${settings.appLogoUrl ? `<img src="${settings.appLogoUrl}">` : ''}
             <div class="header-text">
-                <h1>${mode === 'syahriyah' ? 'LAPORAN SYAHRIYAH PPHQ' : 'E-STATEMENT PPHQ FINANCE'}</h1>
+                <h1>${mode === 'syahriyah' ? 'LAPORAN INFAQ BULANAN PPHQ' : 'E-STATEMENT PPHQ FINANCE'}</h1>
                 <div class="branch-name">${mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch.toUpperCase()}</div>
                 <div class="sub-title">${mode === 'summary' ? 'Summary Performance Per Cabang' : mode === 'syahriyah' ? `Tahun Buku ${selectedYear}` : 'Laporan Pemasukan & Pengeluaran Kas'}</div>
             </div>
@@ -378,7 +378,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
 
     const handleExportCSV = () => {
         const filtered = getFiltered();
-        if (filtered.length === 0) { alert('Tidak ada data pada rentang tanggal tersebut.'); return; }
+        if (filtered.length === 0) { showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "info"); return; }
 
         const openingBalance = getOpeningBalance();
         const totalIncome = filtered.filter(t => t.type === TransactionType.Income).reduce((s, t) => s + t.amount, 0);
@@ -406,7 +406,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             ].join('\n');
         } else if (mode === 'syahriyah') {
             csv = [
-                `"LAPORAN SYAHRIYAH PPHQ - ${displayBranch.toUpperCase()}"`,
+                `\"LAPORAN INFAQ BULANAN PPHQ - ${displayBranch.toUpperCase()}\"` ,
                 `"Tahun Buku: ${selectedYear}"`,
                 `"Dicetak: ${new Date().toLocaleString('id-ID')}"`,
                 '',
@@ -444,7 +444,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `${mode === 'syahriyah' ? 'Syahriyah' : mode === 'summary' ? 'Summary' : 'E-Statement'}_${displayBranch.replace(/\s/g, '_')}_${mode === 'syahriyah' ? selectedYear : startDate + '_sd_' + endDate}.csv`;
+        link.download = `${mode === 'syahriyah' ? 'Infaq_Bulanan' : mode === 'summary' ? 'Summary' : 'E-Statement'}_${displayBranch.replace(/\s/g, '_')}_${mode === 'syahriyah' ? selectedYear : startDate + '_sd_' + endDate}.csv`;
         link.click();
         onClose();
     };

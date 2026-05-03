@@ -3,7 +3,7 @@ import { useAppContext } from '../hooks/useAppContext';
 import { Category, TransactionType } from '../types';
 
 const CategoriesPage = () => {
-    const { categories, addCategory, updateCategory, deleteCategory } = useAppContext();
+    const { categories, addCategory, updateCategory, deleteCategory, showConfirm } = useAppContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
     const [name, setName] = useState('');
@@ -35,9 +35,14 @@ const CategoriesPage = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (window.confirm('Apakah Anda yakin ingin menghapus kategori ini?')) {
-            await deleteCategory(id);
-        }
+        showConfirm(
+            'Hapus Kategori?',
+            'Apakah Anda yakin ingin menghapus kategori ini?',
+            async () => {
+                await deleteCategory(id);
+            },
+            'danger'
+        );
     };
 
     return (

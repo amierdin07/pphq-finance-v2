@@ -4,7 +4,7 @@ import { Branch, User, Role } from '../types';
 import { BranchIcon, UserIcon, PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon, DownloadIcon } from '../constants';
 
 const Branches = () => {
-    const { branches, users, addBranch, updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser, showConfirm } = useAppContext();
+    const { branches, users, addBranch, updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser, showConfirm, showAlert } = useAppContext();
     
     // ... state ...
 
@@ -32,7 +32,7 @@ const Branches = () => {
 
     const downloadAllCredentials = () => {
         const branchUsers = users.filter(u => u.role !== Role.Admin || u.id !== currentUser?.id);
-        if (branchUsers.length === 0) return alert('Tidak ada data pengguna untuk didownload.');
+        if (branchUsers.length === 0) return showAlert('Data Kosong', 'Tidak ada data pengguna untuk didownload.', 'info');
 
         let content = `DAFTAR LOGIN SEMUA UNIT PPHQ\n`;
         content += `Dicetak pada: ${new Date().toLocaleString('id-ID')}\n\n`;
@@ -112,7 +112,7 @@ const Branches = () => {
     // User Modal Logic
     const openUserModal = (user: User | null = null) => {
         if (branches.length === 0) {
-            alert('Silakan buat unit terlebih dahulu sebelum menambahkan pengguna.');
+            showAlert('Peringatan', 'Silakan buat unit terlebih dahulu sebelum menambahkan pengguna.', 'danger');
             return;
         }
         setCurrentUser(user);
@@ -141,7 +141,7 @@ const Branches = () => {
             await updateUserByAdmin({ ...currentUser, ...userData });
         } else {
             if (!userPassword) {
-                alert("Password wajib diisi untuk pengguna baru.");
+                showAlert('Peringatan', "Password wajib diisi untuk pengguna baru.", 'danger');
                 return;
             }
             await addUser({ ...userData, password: userPassword });

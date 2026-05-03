@@ -7,7 +7,7 @@ import { compressImage } from '../utils/imageUtils';
 import ExportModal from '../components/ExportModal';
 
 const SyahriyahPage = () => {
-    const { currentUser, allTransactions, branches, students, addStudent, updateStudent, deleteStudent, addTransaction, updateTransaction, deleteTransaction, globalSearchTerm, setGlobalSearchTerm } = useAppContext();
+    const { currentUser, allTransactions, branches, students, addStudent, updateStudent, deleteStudent, addTransaction, updateTransaction, deleteTransaction, globalSearchTerm, setGlobalSearchTerm, showConfirm, showAlert } = useAppContext();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
     const importInputRef = useRef<HTMLInputElement>(null);
@@ -66,15 +66,15 @@ const SyahriyahPage = () => {
             .sort((a, b) => a.name.localeCompare(b.name));
     }, [students, viewingBranchId, searchQuery]);
 
-    const syahriyahPayments = useMemo(() => {
+    const infaqBulananPayments = useMemo(() => {
         return allTransactions.filter(t => 
-            t.category === 'Syahriyah' && 
+            (t.category === 'Infaq Bulanan' || t.category === 'Syahriyah') && 
             t.branchId === viewingBranchId
         );
     }, [allTransactions, viewingBranchId]);
 
     const getPayment = (studentId: string, studentName: string, monthIndex: number) => {
-        return syahriyahPayments.find(t => {
+        return infaqBulananPayments.find(t => {
             const date = new Date(t.date);
             const isCorrectPeriod = t.description.includes(months[monthIndex]) && date.getFullYear() === selectedYear;
             
@@ -111,7 +111,7 @@ const SyahriyahPage = () => {
             const compressed = await compressImage(file);
             setPaymentForm(prev => ({ ...prev, attachmentUrl: compressed }));
         } catch (error) {
-            alert("Gagal memproses gambar.");
+            showAlert("Error", "Gagal memproses gambar.", "danger");
         } finally {
             setIsCompressing(false);
             e.target.value = '';
@@ -125,8 +125,8 @@ const SyahriyahPage = () => {
         const transactionData = {
             date: new Date(paymentForm.date).toISOString(),
             branchId: selectedStudent.branchId,
-            category: 'Syahriyah',
-            description: `Syahriyah ${months[selectedMonth]} ${selectedYear} - ${selectedStudent.name}`,
+            category: 'Infaq Bulanan',
+            description: `Infaq Bulanan ${months[selectedMonth]} ${selectedYear} - ${selectedStudent.name}`,
             amount,
             type: TransactionType.Income,
             nature: TransactionNature.Money,
@@ -145,15 +145,29 @@ const SyahriyahPage = () => {
 
     const handleDeletePayment = async () => {
         if (!editingTransaction) return;
-        if (window.confirm('Yakin ingin menghapus data syahriyah ini?')) {
-            await deleteTransaction(editingTransaction.id);
-            setIsInputModalOpen(false);
-        }
+        showConfirm(
+            'Hapus Pembayaran',
+            'Yakin ingin menghapus data infaq bulanan ini?',
+            async () => {
+                await deleteTransaction(editingTransaction.id);
+                setIsInputModalOpen(false);
+            }
+        );
+    };
+
+    const handleDeleteStudent = async (student: Student) => {
+        showConfirm(
+            'Hapus Data Santri',
+            `Yakin ingin menghapus data santri ${student.name}? Semua data pembayaran santri ini akan tetap ada namun tidak lagi terikat dengan nama santri ini.`,
+            async () => {
+                await deleteStudent(student.id);
+            }
+        );
     };
 
     const handleAddOrUpdateStudent = async () => {
         if (!studentForm.name) {
-            alert("Nama santri wajib diisi!");
+            showAlert("Peringatan", "Nama santri wajib diisi!", "danger");
             return;
         }
 
@@ -172,7 +186,7 @@ const SyahriyahPage = () => {
             setEditingStudent(null);
         } catch (error: any) {
             console.error("Failed to save student", error);
-            alert(`Gagal menyimpan data santri: ${error.message || 'Error tidak diketahui'}. Silakan restart server bos.`);
+            showAlert("Gagal", `Gagal menyimpan data santri: ${error.message || 'Error tidak diketahui'}. Silakan restart server bos.`, "danger");
         }
     };
 
@@ -208,7 +222,7 @@ const SyahriyahPage = () => {
                     });
                 }
             }
-            alert('Import selesai!');
+            showAlert("Berhasil", 'Import selesai!', "success");
             e.target.value = '';
         };
         reader.readAsText(file);
@@ -222,10 +236,10 @@ const SyahriyahPage = () => {
     if (currentUser?.role === Role.Admin && !viewingBranchId) {
         return (
             <div className="space-y-10 animate-in fade-in duration-700">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-800">Syahriyah Monitoring</h1>
-                    <p className="text-slate-400 font-medium mt-1">Pilih unit untuk memantau data syahriyah santri.</p>
-                </div>
+            <div>
+                <h1 className="text-3xl font-bold text-slate-800">Monitoring Infaq Bulanan</h1>
+                <p className="text-slate-400 font-medium mt-1">Pilih unit untuk memantau data infaq bulanan santri.</p>
+            </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {branches.map(branch => {
                         const branchStudents = students.filter(s => s.branchId === branch.id);
@@ -257,7 +271,7 @@ const SyahriyahPage = () => {
                         </button>
                     )}
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-800">Syahriyah: {currentBranch?.name}</h1>
+                        <h1 className="text-3xl font-bold text-slate-800">Infaq Bulanan: {currentBranch?.name}</h1>
                         <div className="flex items-center gap-2 mt-1">
                             <div className="flex bg-white p-1 rounded-lg border border-slate-100 items-center">
                                 <button onClick={() => setSelectedYear(selectedYear - 1)} className="p-1 hover:bg-slate-50 rounded-md text-slate-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg></button>
@@ -351,6 +365,11 @@ const SyahriyahPage = () => {
                                                 <button onClick={() => { setEditingStudent(student); setStudentForm({ name: student.name, address: student.address || '', parentPhone: student.parentPhone || '', isActive: student.isActive }); setIsAddStudentModalOpen(true); }} className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
                                                     <PencilIcon className="w-4 h-4" />
                                                 </button>
+                                                {currentUser?.role === Role.BranchUser && (
+                                                    <button onClick={() => handleDeleteStudent(student)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                                        <TrashIcon className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </td>
@@ -386,7 +405,7 @@ const SyahriyahPage = () => {
                     <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-start mb-6">
                             <div>
-                                <h2 className="text-lg sm:text-xl font-bold text-slate-800 leading-none">{editingTransaction ? 'Revisi Syahriyah' : 'Input Syahriyah'}</h2>
+                                <h2 className="text-lg sm:text-xl font-bold text-slate-800 leading-none">{editingTransaction ? 'Revisi Infaq Bulanan' : 'Input Infaq Bulanan'}</h2>
                                 <p className="text-emerald-600 text-[9px] font-bold uppercase tracking-widest mt-2">PPHQ Finance Portal</p>
                             </div>
                             <div className="text-right">
@@ -497,9 +516,9 @@ const SyahriyahPage = () => {
             <ExportModal 
                 isOpen={isExportModalOpen} 
                 onClose={() => setIsExportModalOpen(false)} 
-                transactions={syahriyahPayments}
+                transactions={infaqBulananPayments}
                 branches={branches}
-                title="Laporan Syahriyah"
+                title="Laporan Infaq Bulanan"
                 branchName={currentBranch?.name}
                 mode="syahriyah"
                 students={filteredStudents}

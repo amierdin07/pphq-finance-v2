@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const NonMoneyTransactionsPage = () => {
-    const { transactions, allTransactions, addTransaction, updateTransaction, deleteTransaction, currentUser, branches, globalSearchTerm, settings, showConfirm } = useAppContext();
+    const { transactions, allTransactions, addTransaction, updateTransaction, deleteTransaction, currentUser, branches, globalSearchTerm, settings, showConfirm, showAlert } = useAppContext();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,7 +71,7 @@ const NonMoneyTransactionsPage = () => {
         });
 
         if (toExport.length === 0) {
-            alert("Tidak ada data untuk periode ini.");
+            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "info");
             return;
         }
 
@@ -141,7 +141,7 @@ const NonMoneyTransactionsPage = () => {
         });
 
         if (toExport.length === 0) {
-            alert("Tidak ada data untuk periode ini.");
+            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "info");
             return;
         }
 
@@ -195,7 +195,7 @@ const NonMoneyTransactionsPage = () => {
         });
 
         if (toExport.length === 0) {
-            alert("Tidak ada data untuk periode ini.");
+            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "info");
             return;
         }
 
@@ -224,7 +224,7 @@ const NonMoneyTransactionsPage = () => {
             setFormState(prev => ({ ...prev, attachmentUrl: compressed }));
         } catch (error) {
             console.error("Compression failed", error);
-            alert("Gagal memproses gambar.");
+            showAlert("Error", "Gagal memproses gambar.", "danger");
         } finally {
             setIsCompressing(false);
         }
@@ -258,7 +258,7 @@ const NonMoneyTransactionsPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formState.description) {
-            alert('Harap isi Nama Barang.');
+            showAlert("Peringatan", 'Harap isi Nama Barang.', "danger");
             return;
         }
         const transactionData = {

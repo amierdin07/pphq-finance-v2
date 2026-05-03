@@ -123,7 +123,7 @@ const AnnouncementsModal: React.FC<AnnouncementsModalProps> = ({ isOpen, onClose
 };
 
 const ComposeForm = () => {
-    const { createAnnouncement } = useAppContext();
+    const { createAnnouncement, showAlert } = useAppContext();
     const [title, setTitle] = useState('');
     const [message, setMessage] = useState('');
     const [open, setOpen] = useState(false);
@@ -131,7 +131,7 @@ const ComposeForm = () => {
 
     const handleSend = async () => {
         if (!title.trim() || !message.trim()) {
-            alert('Judul dan pesan tidak boleh kosong.');
+            showAlert("Peringatan", 'Judul dan pesan tidak boleh kosong.', "danger");
             return;
         }
         setLoading(true);
