@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { TransactionType, TransactionNature, Role, Branch, Transaction, Student } from '../types';
-import { UserIcon, ChevronDownIcon, PencilIcon, BranchIcon, CameraIcon, ImageIcon, TrashIcon } from '../constants';
+import { UserIcon, ChevronDownIcon, PencilIcon, BranchIcon, CameraIcon, ImageIcon, TrashIcon, WhatsAppIcon } from '../constants';
 import { formatCurrencyInput, parseCurrencyInput } from '../utils';
 import { compressImage } from '../utils/imageUtils';
 import ExportModal from '../components/ExportModal';
@@ -141,6 +141,22 @@ const SyahriyahPage = () => {
         }
 
         setIsInputModalOpen(false);
+    };
+
+    const sendWhatsAppNotification = (student: Student, monthName: string, amount: string, isPaid: boolean) => {
+        if (!student.parentPhone) return showAlert("Peringatan", "Nomor WA orang tua tidak ditemukan.", "danger");
+        
+        const phone = student.parentPhone.replace(/[^0-9]/g, '').replace(/^0/, '62');
+        let message = '';
+        
+        if (isPaid) {
+            message = `Assalamu'alaikum, pembayaran Infaq Bulanan santri *${student.name}* untuk bulan *${monthName}* sebesar *Rp${amount}* telah kami terima. Syukron. Jazakumullah khairan katsiran wa jazakumullah ahsanal jaza.`;
+        } else {
+            message = `Assalamu'alaikum Warahmatullahi Wabarakatuh, Bapak/Ibu wali santri dari *${student.name}*. Menginfokan bahwa untuk Infaq Bulanan bulan *${monthName} ${selectedYear}* saat ini belum tercatat dalam sistem kami. Mohon bantuannya untuk melakukan penyelesaian administrasi. Jika sudah melakukan pembayaran, mohon abaikan pesan ini atau kirimkan foto notanya. Syukron. Wassalamu'alaikum.`;
+        }
+        
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
     };
 
     const handleDeletePayment = async () => {
@@ -353,23 +369,25 @@ const SyahriyahPage = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 flex-shrink-0 ml-auto sm:ml-0">
+                                            <div className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 flex-shrink-0 ml-auto sm:ml-0">
                                                 {currentUser?.role === Role.BranchUser && (
                                                     <button 
                                                         onClick={() => handleOpenPayment(student, new Date().getMonth(), true)}
-                                                        className="px-4 py-2.5 bg-emerald-500 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-emerald-600 transition-all active:scale-95 shadow-md shadow-emerald-500/10"
+                                                        className="px-3 sm:px-4 py-1.5 sm:py-2.5 bg-emerald-500 text-white font-bold text-[8px] sm:text-[10px] uppercase tracking-widest rounded-lg sm:rounded-xl hover:bg-emerald-600 transition-all active:scale-95 shadow-md shadow-emerald-500/10 w-full sm:w-auto"
                                                     >
                                                         Bayar
                                                     </button>
                                                 )}
-                                                <button onClick={() => { setEditingStudent(student); setStudentForm({ name: student.name, address: student.address || '', parentPhone: student.parentPhone || '', isActive: student.isActive }); setIsAddStudentModalOpen(true); }} className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
-                                                    <PencilIcon className="w-4 h-4" />
-                                                </button>
-                                                {currentUser?.role === Role.BranchUser && (
-                                                    <button onClick={() => handleDeleteStudent(student)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                                                        <TrashIcon className="w-4 h-4" />
+                                                <div className="flex items-center gap-0.5 sm:gap-1">
+                                                    <button onClick={() => { setEditingStudent(student); setStudentForm({ name: student.name, address: student.address || '', parentPhone: student.parentPhone || '', isActive: student.isActive }); setIsAddStudentModalOpen(true); }} className="p-1 sm:p-2 text-slate-300 hover:text-slate-600 transition-colors">
+                                                        <PencilIcon className="w-3 h-3 sm:w-4 h-4" />
                                                     </button>
-                                                )}
+                                                    {currentUser?.role === Role.BranchUser && (
+                                                        <button onClick={() => handleDeleteStudent(student)} className="p-1 sm:p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                                            <TrashIcon className="w-3 h-3 sm:w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -382,12 +400,32 @@ const SyahriyahPage = () => {
                                                 className={`px-2 py-4 text-center cursor-pointer transition-all border-r border-slate-50/50 min-h-[50px] ${p ? 'bg-emerald-50/30' : student.isActive ? 'hover:bg-slate-50' : 'bg-slate-50/20 cursor-not-allowed'}`}
                                             >
                                                 {p ? (
-                                                    <div className="flex flex-col items-center gap-1">
+                                                    <div className="flex flex-col items-center gap-1 group/wa">
                                                         <span className="text-emerald-600 font-bold text-[10px]">Rp{p.amount.toLocaleString('id-ID')}</span>
-                                                        {p.attachmentUrl && <ImageIcon className="w-2.5 h-2.5 text-emerald-400" />}
+                                                        <div className="flex items-center gap-1">
+                                                            {p.attachmentUrl && <ImageIcon className="w-2.5 h-2.5 text-emerald-400" />}
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); sendWhatsAppNotification(student, months[idx], p.amount.toLocaleString('id-ID'), true); }}
+                                                                className="opacity-0 group-hover:opacity-100 group-hover/wa:opacity-100 transition-opacity p-0.5 hover:text-emerald-500"
+                                                                title="Kirim Kuitansi WA"
+                                                            >
+                                                                <WhatsAppIcon className="w-3 h-3 text-emerald-500" />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-slate-200 text-[10px]">—</span>
+                                                    <div className="flex flex-col items-center gap-1 group/wa">
+                                                        <span className="text-slate-200 text-[10px]">—</span>
+                                                        {student.isActive && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); sendWhatsAppNotification(student, months[idx], '', false); }}
+                                                                className="opacity-0 group-hover:opacity-100 group-hover/wa:opacity-100 transition-opacity p-0.5 text-slate-300 hover:text-emerald-500"
+                                                                title="Kirim Pengingat WA"
+                                                            >
+                                                                <WhatsAppIcon className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </td>
                                         );
@@ -464,6 +502,15 @@ const SyahriyahPage = () => {
                                     <button onClick={handleDeletePayment} className="flex-1 min-w-[80px] py-3 bg-red-50 text-red-600 font-bold rounded-xl text-xs hover:bg-red-100 transition-all">Hapus</button>
                                 )}
                                 <button onClick={handleSavePayment} className="flex-[2] min-w-[150px] py-3 bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-500/20">{editingTransaction ? 'Simpan Revisi' : 'Simpan Bayar'}</button>
+                                {editingTransaction && (
+                                    <button 
+                                        onClick={() => sendWhatsAppNotification(selectedStudent, months[selectedMonth], paymentForm.amount, true)}
+                                        className="w-full py-3 bg-emerald-50 text-emerald-600 font-bold rounded-xl text-[10px] uppercase tracking-widest border border-emerald-100 flex items-center justify-center gap-2 hover:bg-emerald-100 transition-all mt-2"
+                                    >
+                                        <WhatsAppIcon className="w-4 h-4" />
+                                        Kirim Kuitansi WA
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
