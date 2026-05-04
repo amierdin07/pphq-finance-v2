@@ -67,6 +67,7 @@ const Branches = () => {
     const [currentBranch, setCurrentBranch] = useState<Branch | null>(null);
     const [branchName, setBranchName] = useState('');
     const [branchLocation, setBranchLocation] = useState('');
+    const [branchIsPrivate, setBranchIsPrivate] = useState(false);
 
     // State for User Modal
     const [isUserModalOpen, setUserModalOpen] = useState(false);
@@ -89,6 +90,7 @@ const Branches = () => {
         setCurrentBranch(branch);
         setBranchName(branch?.name || '');
         setBranchLocation(branch?.location || '');
+        setBranchIsPrivate(branch?.isPrivate || false);
         setBranchModalOpen(true);
     };
     const closeBranchModal = () => setBranchModalOpen(false);
@@ -96,9 +98,9 @@ const Branches = () => {
     const handleBranchSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (currentBranch) {
-            await updateBranch({ ...currentBranch, name: branchName, location: branchLocation });
+            await updateBranch({ ...currentBranch, name: branchName, location: branchLocation, isPrivate: branchIsPrivate });
         } else {
-            await addBranch({ name: branchName, location: branchLocation });
+            await addBranch({ name: branchName, location: branchLocation, isPrivate: branchIsPrivate });
         }
         closeBranchModal();
     };
@@ -190,8 +192,14 @@ const Branches = () => {
                 {branches.map(branch => (
                     <div key={branch.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
                         <div className="flex justify-between items-start mb-6">
-                            <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-emerald-50 transition-colors">
+                            <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-emerald-50 transition-colors flex items-center gap-3">
                                 <BranchIcon className="w-6 h-6 text-slate-400 group-hover:text-emerald-500" />
+                                {branch.isPrivate && (
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-rose-50 text-rose-500 rounded-lg text-[9px] font-bold border border-rose-100 animate-pulse">
+                                        <EyeSlashIcon className="w-3 h-3" />
+                                        PRIVATE
+                                    </div>
+                                )}
                             </div>
                             <div className="flex gap-1">
                                 <button onClick={() => openBranchModal(branch)} className="p-2 text-slate-300 hover:text-emerald-500 transition-colors"><PencilIcon className="w-4 h-4" /></button>
@@ -299,6 +307,18 @@ const Branches = () => {
                              <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lokasi</label>
                                 <input type="text" value={branchLocation} onChange={e => setBranchLocation(e.target.value)} className="mt-2 block w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" required />
+                            </div>
+                            <div className="pt-2">
+                                <label className="flex items-center gap-3 cursor-pointer group p-4 bg-slate-50 rounded-2xl hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100">
+                                    <div className="relative">
+                                        <input type="checkbox" checked={branchIsPrivate} onChange={e => setBranchIsPrivate(e.target.checked)} className="sr-only peer" />
+                                        <div className="w-10 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-700 group-hover:text-rose-600 transition-colors">Sembunyikan Unit (Private)</p>
+                                        <p className="text-[9px] text-slate-400 group-hover:text-rose-400 leading-tight mt-0.5 font-medium">Unit ini hanya bisa dilihat oleh Super Admin. Hidden dari Admin Pusat.</p>
+                                    </div>
+                                </label>
                             </div>
                             <div className="flex justify-end gap-3 pt-6">
                                 <button type="button" onClick={closeBranchModal} className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all">Batal</button>

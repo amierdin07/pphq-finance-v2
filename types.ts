@@ -39,6 +39,7 @@ export interface Branch {
   id: string;
   name: string;
   location: string;
+  isPrivate?: boolean;
 }
 
 export interface Category {

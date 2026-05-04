@@ -388,19 +388,48 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, []);
     
     const value = useMemo(() => {
+        // Filter units and data for SubAdmin (Admin Pusat)
+        const isSubAdmin = currentUser?.role === Role.SubAdmin;
+        
+        const filteredBranches = isSubAdmin
+            ? branches.filter(b => !b.isPrivate)
+            : branches;
+
+        const filteredAllTransactions = isSubAdmin
+            ? allTransactions.filter(t => {
+                const branch = branches.find(b => b.id === t.branchId);
+                return !branch?.isPrivate;
+            })
+            : allTransactions;
+
+        const filteredStudents = isSubAdmin
+            ? students.filter(s => {
+                const branch = branches.find(b => b.id === s.branchId);
+                return !branch?.isPrivate;
+            })
+            : students;
+
+        const filteredUsers = isSubAdmin
+            ? users.filter(u => {
+                if (u.role === Role.Admin || u.role === Role.SubAdmin) return true;
+                const branch = branches.find(b => b.id === u.branchId);
+                return !branch?.isPrivate;
+            })
+            : users;
+
         const transactions = (currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin)
-            ? allTransactions 
-            : allTransactions.filter(t => t.branchId === currentUser?.branchId);
+            ? filteredAllTransactions 
+            : filteredAllTransactions.filter(t => t.branchId === currentUser?.branchId);
         
         return {
             currentUser,
             isLoading,
-            users,
-            branches,
+            users: filteredUsers,
+            branches: filteredBranches,
             categories,
-            students,
+            students: filteredStudents,
             transactions,
-            allTransactions,
+            allTransactions: filteredAllTransactions,
             announcements,
             settings,
             confirmState,

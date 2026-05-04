@@ -55,7 +55,8 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS branches (
     id TEXT PRIMARY KEY,
     name TEXT,
-    location TEXT
+    location TEXT,
+    isPrivate INTEGER DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS categories (
@@ -100,6 +101,7 @@ try { db.exec("ALTER TABLE users ADD COLUMN unitHeadName TEXT"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN unitTreasurerName TEXT"); } catch (e) {}
 try { db.exec("ALTER TABLE transactions ADD COLUMN item TEXT"); } catch (e) {}
 try { db.exec("ALTER TABLE transactions ADD COLUMN attachmentUrl TEXT"); } catch (e) {}
+try { db.exec("ALTER TABLE branches ADD COLUMN isPrivate INTEGER DEFAULT 0"); } catch (e) {}
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -142,7 +144,7 @@ async function startServer() {
       // 1. System Actions
       if (action === "getAllData") {
         const users = db.prepare("SELECT * FROM users").all();
-        const branches = db.prepare("SELECT * FROM branches").all();
+        const branches = db.prepare("SELECT * FROM branches").all().map((b: any) => ({ ...b, isPrivate: b.isPrivate === 1 }));
         const categories = db.prepare("SELECT * FROM categories").all();
         const allTransactions = db.prepare("SELECT * FROM transactions").all();
         const students = db.prepare("SELECT * FROM students").all();
@@ -188,7 +190,7 @@ async function startServer() {
           db.prepare("DELETE FROM users WHERE role NOT IN ('Admin')").run();
         })();
         const users = db.prepare("SELECT * FROM users").all();
-        const branches = db.prepare("SELECT * FROM branches").all();
+        const branches = db.prepare("SELECT * FROM branches").all().map((b: any) => ({ ...b, isPrivate: b.isPrivate === 1 }));
         const categories = db.prepare("SELECT * FROM categories").all();
         const allTransactions = db.prepare("SELECT * FROM transactions").all();
         return res.json({ status: "success", data: { users, branches, categories, allTransactions } });
@@ -317,18 +319,18 @@ async function startServer() {
       if (action === "addBranch") {
         const { branch } = payload;
         const id = generateId();
-        db.prepare("INSERT INTO branches (id, name, location) VALUES (?, ?, ?)")
-          .run(id, branch.name, branch.location);
-        const newBranch = db.prepare("SELECT * FROM branches WHERE id = ?").get(id);
-        return res.json({ status: "success", data: { newBranch } });
+        db.prepare("INSERT INTO branches (id, name, location, isPrivate) VALUES (?, ?, ?, ?)")
+          .run(id, branch.name, branch.location, branch.isPrivate ? 1 : 0);
+        const newBranch = db.prepare("SELECT * FROM branches WHERE id = ?").get(id) as any;
+        return res.json({ status: "success", data: { newBranch: { ...newBranch, isPrivate: newBranch.isPrivate === 1 } } });
       }
 
       if (action === "updateBranch") {
         const { branch } = payload;
-        db.prepare("UPDATE branches SET name = ?, location = ? WHERE id = ?")
-          .run(branch.name, branch.location, branch.id);
-        const updatedBranch = db.prepare("SELECT * FROM branches WHERE id = ?").get(branch.id);
-        return res.json({ status: "success", data: { updatedBranch } });
+        db.prepare("UPDATE branches SET name = ?, location = ?, isPrivate = ? WHERE id = ?")
+          .run(branch.name, branch.location, branch.isPrivate ? 1 : 0, branch.id);
+        const updatedBranch = db.prepare("SELECT * FROM branches WHERE id = ?").get(branch.id) as any;
+        return res.json({ status: "success", data: { updatedBranch: { ...updatedBranch, isPrivate: updatedBranch.isPrivate === 1 } } });
       }
 
       if (action === "deleteBranch") {
@@ -339,7 +341,7 @@ async function startServer() {
           db.prepare("DELETE FROM branches WHERE id = ?").run(id);
         })();
         const users = db.prepare("SELECT * FROM users").all();
-        const branches = db.prepare("SELECT * FROM branches").all();
+        const branches = db.prepare("SELECT * FROM branches").all().map((b: any) => ({ ...b, isPrivate: b.isPrivate === 1 }));
         const allTransactions = db.prepare("SELECT * FROM transactions").all();
         return res.json({ status: "success", data: { users, branches, allTransactions } });
       }
