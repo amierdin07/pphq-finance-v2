@@ -31,7 +31,7 @@ const NonMoneyTransactionsPage = () => {
         attachmentUrl: '',
     });
 
-    const isAdmin = currentUser?.role === Role.Admin;
+    const isAdmin = currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin;
 
     const branchName = useMemo(() => {
         if (isAdmin) {
