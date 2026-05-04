@@ -468,6 +468,81 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         onClose();
     };
 
+    const handleExportWord = () => {
+        const filtered = getFiltered();
+        if (filtered.length === 0) { showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "info"); return; }
+
+        const displayTitle = mode === 'syahriyah' ? 'LAPORAN INFAQ BULANAN PPHQ' : 'E-STATEMENT PPHQ FINANCE';
+        const displaySubtitle = mode === 'syahriyah' ? `UNIT: ${displayBranch.toUpperCase()} | TAHUN: ${selectedYear}` : `UNIT: ${displayBranch.toUpperCase()} | PERIODE: ${startDate} s/d ${endDate}`;
+        
+        const openingBalance = mode === 'syahriyah' ? 0 : getOpeningBalance();
+        const totalIncome = filtered.filter(t => t.type === TransactionType.Income).reduce((s, t) => s + t.amount, 0);
+        const totalExpense = filtered.filter(t => t.type === TransactionType.Expense).reduce((s, t) => s + t.amount, 0);
+        const finalBalance = openingBalance + (totalIncome - totalExpense);
+
+        let tableHtml = '';
+        if (mode === 'summary') {
+            const summary = getBranchSummary(filtered);
+            tableHtml = `<table><thead><tr><th>No</th><th>Nama Unit</th><th>Pemasukan</th><th>Pengeluaran</th><th>Saldo Bersih</th></tr></thead>
+            <tbody>${summary.map((s, i) => `<tr><td>${i+1}</td><td>${s.name}</td><td>Rp${s.income.toLocaleString('id-ID')}</td><td>Rp${s.expense.toLocaleString('id-ID')}</td><td><b>Rp${s.balance.toLocaleString('id-ID')}</b></td></tr>`).join('')}</tbody></table>`;
+        } else if (mode === 'syahriyah') {
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            tableHtml = `<table><thead><tr><th>No</th><th>Nama Santri</th>${months.map(m => `<th>${m.substring(0,3)}</th>`).join('')}</tr></thead>
+            <tbody>${students.map((s, i) => {
+                const row = [`<td>${i+1}</td>`, `<td>${s.name}</td>`];
+                months.forEach((_, mIdx) => {
+                    const p = transactions.find(t => {
+                        const date = new Date(t.date);
+                        const isCorrectPeriod = t.description.includes(months[mIdx]) && date.getFullYear() === selectedYear;
+                        if (t.item === s.id) return isCorrectPeriod;
+                        return isCorrectPeriod && t.description.includes(s.name);
+                    });
+                    row.push(`<td style="color: ${p ? '#10b981' : '#94a3b8'}">${p ? p.amount.toLocaleString('id-ID') : '-'}</td>`);
+                });
+                return `<tr>${row.join('')}</tr>`;
+            }).join('')}</tbody></table>`;
+        } else {
+            tableHtml = `<table><thead><tr><th>No</th><th>Tanggal</th><th>Deskripsi</th><th>Kategori</th><th>Tipe</th><th>Jumlah (Rp)</th></tr></thead>
+            <tbody>${filtered.map((t, i) => `<tr><td>${i+1}</td><td>${new Date(t.date).toLocaleDateString('id-ID')}</td><td>${t.description}</td><td>${t.category}</td><td>${t.type === TransactionType.Income ? 'Masuk' : 'Keluar'}</td><td style="color: ${t.type === TransactionType.Income ? '#10b981' : '#ef4444'}"><b>${(t.type === TransactionType.Income ? '+' : '-') + 'Rp' + t.amount.toLocaleString('id-ID')}</b></td></tr>`).join('')}</tbody></table>`;
+        }
+
+        const summaryHtml = mode === 'syahriyah' ? '' : `
+        <div style="margin-left: auto; width: 250px; background: #f8fafc; padding: 15px; border-radius: 10px; margin-top: 20px;">
+            <p>Saldo Awal: <b>Rp${openingBalance.toLocaleString('id-ID')}</b></p>
+            <p style="color: #10b981">Total Masuk: <b>Rp${totalIncome.toLocaleString('id-ID')}</b></p>
+            <p style="color: #ef4444">Total Keluar: <b>Rp${totalExpense.toLocaleString('id-ID')}</b></p>
+            <hr>
+            <p style="font-size: 14px">SALDO AKHIR: <b>Rp${finalBalance.toLocaleString('id-ID')}</b></p>
+        </div>`;
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Export Word</title>
+        <style>
+            body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;line-height:1.5}
+            .header-bar{background:#10b981;color:#fff;padding:25px;margin-bottom:30px;text-align:center}
+            h1{font-size:20px;margin:0}
+            .sub-title{font-size:12px;margin-top:5px;opacity:0.9}
+            table{width:100%;border-collapse:collapse;font-size:10px}
+            th{background:#10b981;color:#fff;padding:10px;text-align:left;text-transform:uppercase}
+            td{padding:8px 10px;border-bottom:1px solid #f1f5f9}
+            tr:nth-child(even) td{background:#fcfdfe}
+        </style></head><body>
+        <div class="header-bar">
+            <h1>${displayTitle}</h1>
+            <div class="sub-title">${displaySubtitle}</div>
+        </div>
+        ${tableHtml}
+        ${summaryHtml}
+        </body></html>`;
+
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${mode === 'syahriyah' ? 'Infaq_Bulanan' : mode === 'summary' ? 'Summary' : 'E-Statement'}_${displayBranch.replace(/\s/g, '_')}_${mode === 'syahriyah' ? selectedYear : startDate + '_sd_' + endDate}.doc`;
+        link.click();
+        onClose();
+    };
+
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex justify-center items-center p-4">
             <div className="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-300">
@@ -509,6 +584,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                     <button onClick={handleExportCSV} className="w-full py-3.5 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2.5">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         Download CSV / Excel
+                    </button>
+                    <button onClick={handleExportWord} className="w-full py-3.5 bg-blue-50 text-blue-600 font-bold rounded-2xl hover:bg-blue-100 transition-all flex items-center justify-center gap-2.5">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Download Word (.doc)
                     </button>
                     <button onClick={onClose} className="mt-1 py-2 text-slate-400 font-bold text-sm hover:text-slate-600 transition-all">Batal</button>
                 </div>

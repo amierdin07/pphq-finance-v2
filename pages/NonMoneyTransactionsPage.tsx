@@ -212,6 +212,52 @@ const NonMoneyTransactionsPage = () => {
         setIsExportModalOpen(false);
     };
 
+    const handleDownloadWord = () => {
+        const toExport = filteredTransactions.filter(t => {
+            const d = t.date.split('T')[0];
+            return d >= exportDates.start && d <= exportDates.end;
+        });
+
+        if (toExport.length === 0) {
+            showAlert("Data Kosong", "Tidak ada data untuk periode ini.", "success");
+            return;
+        }
+
+        const logoUrl = settings.appLogoUrl;
+        const displayTitle = 'LAPORAN TRANSAKSI NON UANG';
+        const displaySubtitle = `UNIT: ${branchName.toUpperCase()} | PERIODE: ${exportDates.start} s/d ${exportDates.end}`;
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Export Non Uang</title>
+        <style>
+            body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;line-height:1.5}
+            .header-bar{background:#10b981;color:#fff;padding:25px;margin-bottom:30px;display:flex;align-items:center;justify-content:center;gap:20px}
+            .header-text{text-align:left}
+            h1{font-size:22px;margin:0;letter-spacing:1px}
+            .sub-title{font-size:12px;font-weight:700;margin-top:5px;opacity:0.9}
+            table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:30px}
+            th{background:#10b981;color:#fff;padding:12px;text-align:left;text-transform:uppercase}
+            td{padding:10px 12px;border-bottom:1px solid #f1f5f9}
+            tr:nth-child(even) td{background:#fcfdfe}
+        </style></head><body>
+        <div class="header-bar">
+            <div class="header-text">
+                <h1>${displayTitle}</h1>
+                <div class="sub-title">${displaySubtitle}</div>
+            </div>
+        </div>
+        <table><thead><tr><th>No</th><th>Tanggal</th><th>Unit</th><th>Nama Barang</th><th>Jumlah</th><th>Sumber</th></tr></thead>
+        <tbody>${toExport.map((t,i)=>`<tr><td>${i+1}</td><td>${new Date(t.date).toLocaleDateString('id-ID')}</td><td>${getBranchName(t.branchId)}</td><td>${t.description}</td><td>${t.item || '-'}</td><td>${t.category || '-'}</td></tr>`).join('')}</tbody></table>
+        </body></html>`;
+
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `NonUang_${branchName.replace(/\s/g, '_')}_${exportDates.start}_${exportDates.end}.doc`;
+        link.click();
+        setIsExportModalOpen(false);
+    };
+
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -529,6 +575,10 @@ const NonMoneyTransactionsPage = () => {
                             <button onClick={handleExportCSV} className="w-full py-3.5 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                                 Download CSV / Excel
+                            </button>
+                            <button onClick={handleDownloadWord} className="w-full py-3.5 bg-blue-50 text-blue-600 font-bold rounded-2xl hover:bg-blue-100 transition-all flex items-center justify-center gap-2">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                Download Word (.doc)
                             </button>
                             <button onClick={() => setIsExportModalOpen(false)} className="mt-2 py-2 text-slate-400 font-bold text-xs hover:text-slate-600 transition-all">Batal</button>
                         </div>
