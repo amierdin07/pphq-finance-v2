@@ -141,6 +141,19 @@ const SyahriyahPage = () => {
         }
 
         setIsInputModalOpen(false);
+        
+        // After successful save, show confirmation to send WA
+        const savedMonth = months[selectedMonth];
+        const savedAmount = paymentForm.amount;
+        const savedStudent = selectedStudent;
+
+        showConfirm(
+            "Pembayaran Berhasil!",
+            `Data infaq bulanan ${savedStudent.name} bulan ${savedMonth} telah tersimpan. Ingin mengirim kuitansi ke WhatsApp orang tua?`,
+            () => sendWhatsAppNotification(savedStudent, savedMonth, savedAmount, true),
+            'success',
+            'Ya, Kirim WA'
+        );
     };
 
     const sendWhatsAppNotification = (student: Student, monthName: string, amount: string, isPaid: boolean) => {
@@ -328,7 +341,7 @@ const SyahriyahPage = () => {
             </div>
 
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                <div className="overflow-x-auto custom-scrollbar touch-pan-x">
+                <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead>
                             <tr className="bg-slate-50/50">
@@ -502,15 +515,6 @@ const SyahriyahPage = () => {
                                     <button onClick={handleDeletePayment} className="flex-1 min-w-[80px] py-3 bg-red-50 text-red-600 font-bold rounded-xl text-xs hover:bg-red-100 transition-all">Hapus</button>
                                 )}
                                 <button onClick={handleSavePayment} className="flex-[2] min-w-[150px] py-3 bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-500/20">{editingTransaction ? 'Simpan Revisi' : 'Simpan Bayar'}</button>
-                                {editingTransaction && (
-                                    <button 
-                                        onClick={() => sendWhatsAppNotification(selectedStudent, months[selectedMonth], paymentForm.amount, true)}
-                                        className="w-full py-3 bg-emerald-50 text-emerald-600 font-bold rounded-xl text-[10px] uppercase tracking-widest border border-emerald-100 flex items-center justify-center gap-2 hover:bg-emerald-100 transition-all mt-2"
-                                    >
-                                        <WhatsAppIcon className="w-4 h-4" />
-                                        Kirim Kuitansi WA
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </div>
