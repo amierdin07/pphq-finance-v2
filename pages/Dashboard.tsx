@@ -131,7 +131,7 @@ const Dashboard = () => {
     );
     const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
-    const rawData = currentUser?.role === Role.Admin ? allTransactions : transactions;
+    const rawData = (currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin) ? allTransactions : transactions;
 
     const filteredData = useMemo(() => {
         return rawData.filter(t => {
@@ -142,7 +142,7 @@ const Dashboard = () => {
 
     const branchName = useMemo(() => {
         if (!currentUser) return '';
-        if (currentUser.role === Role.Admin) return 'semua unit';
+        if (currentUser.role === Role.Admin || currentUser.role === Role.SubAdmin) return 'semua unit';
         return branches.find(b => b.id === currentUser.branchId)?.name || '';
     }, [currentUser, branches]);
 
@@ -192,9 +192,9 @@ const Dashboard = () => {
                         <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="px-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none" />
                     </div>
                     <div className="h-8 w-px bg-slate-100 mx-2 hidden sm:block"></div>
-                    <button onClick={() => handleExport(currentUser?.role === Role.Admin ? 'summary' : 'detailed')} className="px-6 py-2.5 bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center gap-2">
+                    <button onClick={() => handleExport((currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin) ? 'summary' : 'detailed')} className="px-6 py-2.5 bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        {currentUser?.role === Role.Admin ? 'Ringkasan Laporan' : 'E-Statement'}
+                        {(currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin) ? 'Ringkasan Laporan' : 'E-Statement'}
                     </button>
                 </div>
             </div>
@@ -216,8 +216,8 @@ const Dashboard = () => {
                 <DashboardCard title="Total Pemasukan" value={`Rp${totalIncome.toLocaleString('id-ID')}`} icon={<IncomeIcon className="w-5 h-5 text-blue-600"/>} iconColorClass="bg-blue-50" subtitle={`Periode terpilih`} />
             </div>
 
-            {/* Admin Leaderboard & Monitoring Section */}
-            {currentUser?.role === Role.Admin && (
+            {/* Admin & SubAdmin Leaderboard & Monitoring Section */}
+            {(currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin) && (
                 <>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                         <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col h-full">

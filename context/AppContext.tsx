@@ -388,7 +388,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, []);
     
     const value = useMemo(() => {
-        const transactions = currentUser?.role === Role.Admin 
+        const transactions = (currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin)
             ? allTransactions 
             : allTransactions.filter(t => t.branchId === currentUser?.branchId);
         

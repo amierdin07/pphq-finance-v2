@@ -52,7 +52,7 @@ const BranchSummaryCard = ({ branch, transactions }: { branch: Branch, transacti
 };
 
 const MonitoringPage = () => {
-    const { branches, allTransactions } = useAppContext();
+    const { currentUser, branches, allTransactions } = useAppContext();
     const [startDate, setStartDate] = useState(
         new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
     );
@@ -97,7 +97,9 @@ const MonitoringPage = () => {
                         <BranchIcon className="w-8 h-8 text-slate-300" />
                     </div>
                     <p className="text-slate-400 font-bold">Belum ada unit yang terdaftar.</p>
-                    <Link to="/branches" className="text-emerald-500 text-sm font-bold mt-2 inline-block hover:underline">Kelola manajemen unit</Link>
+                    {currentUser?.role === Role.Admin && (
+                        <Link to="/branches" className="text-emerald-500 text-sm font-bold mt-2 inline-block hover:underline">Kelola manajemen unit</Link>
+                    )}
                 </div>
             )}
         </div>

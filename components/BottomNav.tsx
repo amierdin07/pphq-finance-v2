@@ -24,7 +24,14 @@ const BottomNav = () => {
         { to: '/income-non-money', icon: <GiftIcon className="w-5 h-5" />, label: 'Non Uang' },
     ];
 
-    const menuItems = currentUser?.role === Role.Admin ? adminItems : branchItems;
+    let menuItems = currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin ? adminItems : branchItems;
+    
+    // Admin (SubAdmin) cannot see Unit Management and Categories
+    if (currentUser?.role === Role.SubAdmin) {
+        menuItems = menuItems.filter(item => 
+            item.to !== '/categories' && item.to !== '/branches'
+        );
+    }
 
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex items-center justify-around h-16 z-50 px-1 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">

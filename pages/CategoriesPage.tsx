@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Category, TransactionType } from '../types';
+import { Category, TransactionType, Role } from '../types';
+import { Navigate } from 'react-router-dom';
 
 const CategoriesPage = () => {
-    const { categories, addCategory, updateCategory, deleteCategory, showConfirm } = useAppContext();
+    const { currentUser, categories, addCategory, updateCategory, deleteCategory, showConfirm } = useAppContext();
+    const navigate = React.useMemo(() => (currentUser?.role !== Role.Admin ? () => <Navigate to="/" /> : null), [currentUser]);
+
+    if (currentUser?.role !== Role.Admin) {
+        return <Navigate to="/" />;
+    }
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
     const [name, setName] = useState('');

@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Branch, User, Role } from '../types';
+import { Navigate } from 'react-router-dom';
 import { BranchIcon, UserIcon, PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon, DownloadIcon } from '../constants';
 
 const Branches = () => {
-    const { branches, users, addBranch, updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser, showConfirm, showAlert } = useAppContext();
+    const { currentUser, branches, users, addBranch, updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser, showConfirm, showAlert } = useAppContext();
+    
+    if (currentUser?.role !== Role.Admin) {
+        return <Navigate to="/" />;
+    }
     
     // ... state ...
 
@@ -132,7 +137,7 @@ const Branches = () => {
             name: userName,
             email: userEmail,
             role: userRole,
-            branchId: userRole === Role.Admin ? '' : userBranchId,
+            branchId: (userRole === Role.Admin || userRole === Role.SubAdmin) ? '' : userBranchId,
             isActive: userIsActive,
             password: userPassword
         };
@@ -248,8 +253,8 @@ const Branches = () => {
                                         <p className="text-xs text-slate-400">{user.email}</p>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 font-bold text-[10px] rounded-lg ${user.role === Role.Admin ? 'bg-purple-50 text-purple-600' : 'bg-slate-100 text-slate-600'}`}>
-                                            {user.role === Role.Admin ? 'Admin' : (branches.find(b => b.id === user.branchId)?.name || 'N/A')}
+                                        <span className={`px-3 py-1 font-bold text-[10px] rounded-lg ${user.role === Role.Admin ? 'bg-purple-50 text-purple-600' : user.role === Role.SubAdmin ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
+                                            {user.role === Role.Admin ? 'Super Admin' : user.role === Role.SubAdmin ? 'Admin' : (branches.find(b => b.id === user.branchId)?.name || 'N/A')}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -330,7 +335,8 @@ const Branches = () => {
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Role / Peran</label>
                                     <select value={userRole} onChange={e => setUserRole(e.target.value as Role)} className="mt-2 block w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700 appearance-none" required>
                                         <option value={Role.BranchUser}>User Unit (Cabang)</option>
-                                        <option value={Role.Admin}>Admin (Pusat)</option>
+                                        <option value={Role.SubAdmin}>Admin (Pusat)</option>
+                                        <option value={Role.Admin}>Super Admin (Pemilik)</option>
                                     </select>
                                 </div>
                                 <div>

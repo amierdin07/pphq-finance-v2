@@ -185,7 +185,7 @@ async function startServer() {
           db.prepare("DELETE FROM transactions").run();
           db.prepare("DELETE FROM branches").run();
           db.prepare("DELETE FROM categories").run();
-          db.prepare("DELETE FROM users WHERE role != 'Admin'").run();
+          db.prepare("DELETE FROM users WHERE role NOT IN ('Admin')").run();
         })();
         const users = db.prepare("SELECT * FROM users").all();
         const branches = db.prepare("SELECT * FROM branches").all();

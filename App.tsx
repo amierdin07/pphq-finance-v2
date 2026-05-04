@@ -165,13 +165,19 @@ function App() {
               </>
             )}
             
-            {/* Admin specific routes */}
-            {currentUser?.role === Role.Admin && (
+            {/* Admin & SubAdmin shared routes */}
+            {(currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin) && (
                 <>
                     <Route path="monitoring" element={<MonitoringPage />} />
+                    <Route path="branch-transactions/:branchId" element={<BranchTransactions />} />
+                </>
+            )}
+
+            {/* Super Admin specific routes */}
+            {currentUser?.role === Role.Admin && (
+                <>
                     <Route path="categories" element={<CategoriesPage />} />
                     <Route path="branches" element={<Branches />} />
-                    <Route path="branch-transactions/:branchId" element={<BranchTransactions />} />
                 </>
             )}
   

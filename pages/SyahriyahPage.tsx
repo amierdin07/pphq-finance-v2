@@ -233,7 +233,7 @@ const SyahriyahPage = () => {
         setIsImageModalOpen(true);
     };
 
-    if (currentUser?.role === Role.Admin && !viewingBranchId) {
+    if ((currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin) && !viewingBranchId) {
         return (
             <div className="space-y-10 animate-in fade-in duration-700">
             <div>
@@ -265,7 +265,7 @@ const SyahriyahPage = () => {
         <div className="space-y-8 animate-in fade-in duration-700 pb-20">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                    {currentUser?.role === Role.Admin && (
+                    {(currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin) && (
                         <button onClick={() => setViewingBranchId(null)} className="p-2.5 bg-white shadow-sm border border-slate-100 text-slate-400 rounded-xl hover:text-emerald-500 transition-all">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                         </button>

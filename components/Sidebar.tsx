@@ -59,7 +59,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         { to: '/income-non-money', icon: <GiftIcon className="w-5 h-5" />, label: 'Non Uang' },
     ];
 
-    const menuItems = currentUser?.role === Role.Admin ? adminItems : branchItems;
+    let menuItems = currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin ? adminItems : branchItems;
+    
+    // Admin (SubAdmin) cannot see Unit Management and Categories
+    if (currentUser?.role === Role.SubAdmin) {
+        menuItems = menuItems.filter(item => 
+            item.to !== '/categories' && item.to !== '/branches'
+        );
+    }
 
     return (
         <>

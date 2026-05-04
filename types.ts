@@ -1,6 +1,7 @@
 // Define enums for specific, controlled sets of values.
 export enum Role {
   Admin = 'Admin',
+  SubAdmin = 'SubAdmin',
   BranchUser = 'BranchUser',
 }
 

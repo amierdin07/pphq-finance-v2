@@ -221,8 +221,8 @@ const SettingsPage = () => {
                 </button>
             </div>
 
-            <div className={`grid grid-cols-1 ${currentUser?.role === Role.Admin ? 'lg:grid-cols-3' : 'max-w-2xl mx-auto'} gap-8`}>
-                <div className={`${currentUser?.role === Role.Admin ? 'lg:col-span-2' : ''} space-y-8`}>
+            <div className={`grid grid-cols-1 ${currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin ? 'lg:grid-cols-3' : 'max-w-2xl mx-auto'} gap-8`}>
+                <div className={`${currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin ? 'lg:col-span-2' : ''} space-y-8`}>
                     
                     <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
                         <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
@@ -333,6 +333,7 @@ const SettingsPage = () => {
                         </div>
                     </div>
 
+                    {/* Only Super Admin can see branding settings */}
                     {currentUser?.role === Role.Admin && (
                         <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
                             <h2 className="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
