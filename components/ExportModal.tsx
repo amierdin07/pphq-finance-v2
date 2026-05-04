@@ -67,338 +67,78 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
     };
 
     // ── Real PDF download using jsPDF ─────────────────────────────
-    const handleDownloadPDF = () => {
+    const getImageDimensions = (url: string): Promise<{ w: number, h: number }> => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve({ w: img.width, h: img.height });
+            img.onerror = () => resolve({ w: 1, h: 1 });
+            img.src = url;
+        });
+    };
+
+    const handleExportPDF = async (action: 'download' | 'print') => {
         const filtered = getFiltered();
         if (filtered.length === 0) {
             showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "success");
             return;
         }
 
-        const doc = new jsPDF({ orientation: mode === 'syahriyah' ? 'landscape' : 'portrait', unit: 'mm', format: 'a4' });
-        const pageW = doc.internal.pageSize.getWidth();
-        const pageH = doc.internal.pageSize.getHeight();
-
-        const months = [
-            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-        ];
-
-        // — Header bar
-        doc.setFillColor(16, 185, 129); // emerald-500
-        doc.rect(0, 0, pageW, 32, 'F');
-
-        // — Title & Logo (Kop)
-        const headerTitle = mode === 'syahriyah' ? 'LAPORAN INFAQ BULANAN PPHQ' : 'E-STATEMENT PPHQ FINANCE';
-        if (settings.appLogoUrl) {
-            try {
-                // Add Logo to the left
-                doc.addImage(settings.appLogoUrl, 'JPEG', 14, 6, 20, 20, undefined, 'FAST');
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(16);
-                doc.setTextColor(255, 255, 255);
-                doc.text(headerTitle, 38, 13);
-
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text(mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch.toUpperCase(), 38, 20);
-
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                doc.text(mode === 'summary' ? 'Summary Performance Per Cabang' : mode === 'syahriyah' ? `Tahun Buku ${selectedYear}` : 'Laporan Pemasukan & Pengeluaran Kas', 38, 26);
-            } catch (e) {
-                // Fallback if image fails
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(18);
-                doc.setTextColor(255, 255, 255);
-                doc.text(headerTitle, pageW / 2, 13, { align: 'center' });
-
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-                doc.text(mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch, pageW / 2, 21, { align: 'center' });
-            }
-        } else {
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.setTextColor(255, 255, 255);
-            doc.text(headerTitle, pageW / 2, 13, { align: 'center' });
-
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch, pageW / 2, 21, { align: 'center' });
-
-            doc.setFontSize(8);
-            doc.text(mode === 'summary' ? 'Summary Performance Per Cabang' : mode === 'syahriyah' ? `Tahun Buku ${selectedYear}` : 'Laporan Pemasukan & Pengeluaran Kas', pageW / 2, 27, { align: 'center' });
-        }
-
-        // — Meta info box
-        doc.setTextColor(71, 85, 105);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        const periodText = mode === 'syahriyah' ? `Unit: ${displayBranch}` : `Periode: ${new Date(startDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })} – ${new Date(endDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`;
-        const printedText = `Dicetak: ${new Date().toLocaleString('id-ID')}`;
-        doc.setFillColor(248, 250, 252);
-        doc.roundedRect(14, 36, pageW - 28, 12, 3, 3, 'F');
-        doc.text(periodText, 19, 43);
-        doc.text(printedText, pageW - 19, 43, { align: 'right' });
-
-        // — Watermark Logo (Transparent Background)
-        if (settings.appLogoUrl) {
-            try {
-                const opacity = 0.1;
-                const imgW = 80;
-                const imgH = 80;
-                const x = (pageW - imgW) / 2;
-                const y = (pageH - imgH) / 2;
-                
-                // @ts-ignore
-                doc.saveGraphicsState();
-                // @ts-ignore
-                doc.setGState(new (doc as any).GState({ opacity }));
-                doc.addImage(settings.appLogoUrl, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
-                // @ts-ignore
-                doc.restoreGraphicsState();
-            } catch (e) {
-                console.warn("Watermark error:", e);
-            }
-        }
-
-        if (mode === 'summary') {
-            const summaryData = getBranchSummary(filtered);
-            const rows = summaryData.map((s, i) => [
-                i + 1,
-                s.name,
-                'Rp' + s.income.toLocaleString('id-ID'),
-                'Rp' + s.expense.toLocaleString('id-ID'),
-                'Rp' + s.balance.toLocaleString('id-ID'),
-            ]);
-
-            autoTable(doc, {
-                startY: 52,
-                head: [['No', 'Nama unit', 'Pemasukan', 'Pengeluaran', 'Saldo Bersih']],
-                body: rows,
-                theme: 'striped',
-                headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold', fontSize: 9 },
-                bodyStyles: { fontSize: 9, textColor: [30, 41, 59] },
-                columnStyles: {
-                    0: { cellWidth: 10, halign: 'center' },
-                    2: { halign: 'right', textColor: [16, 185, 129] },
-                    3: { halign: 'right', textColor: [239, 68, 68] },
-                    4: { halign: 'right', fontStyle: 'bold' },
-                },
-            });
-        } else if (mode === 'syahriyah') {
-            const rows = students.map((s, i) => {
-                const rowData: any[] = [i + 1, s.name];
-                months.forEach((_, mIdx) => {
-                    const p = transactions.find(t => {
-                        const date = new Date(t.date);
-                        const isCorrectPeriod = t.description.includes(months[mIdx]) && date.getFullYear() === selectedYear;
-                        if (t.item === s.id) return isCorrectPeriod;
-                        return isCorrectPeriod && t.description.includes(s.name);
-                    });
-                    rowData.push(p ? p.amount.toLocaleString('id-ID') : '-');
-                });
-                return rowData;
-            });
-
-            autoTable(doc, {
-                startY: 52,
-                head: [['No', 'Nama Santri', ...months.map(m => m.substring(0, 3))]],
-                body: rows,
-                theme: 'grid',
-                headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold', fontSize: 8 },
-                bodyStyles: { fontSize: 7, textColor: [30, 41, 59] },
-                columnStyles: {
-                    0: { cellWidth: 8, halign: 'center' },
-                    1: { cellWidth: 35 },
-                },
-                didDrawCell: (data) => {
-                    if (data.column.index > 1 && data.section === 'body') {
-                        if (data.cell.text[0] !== '-') {
-                            doc.setTextColor(16, 185, 129);
-                            doc.setFont('helvetica', 'bold');
-                        } else {
-                            doc.setTextColor(203, 213, 225);
-                        }
-                    }
-                }
-            });
-        } else {
-            const rows = filtered.map((t, i) => [
-                i + 1,
-                new Date(t.date).toLocaleDateString('id-ID'),
-                t.description,
-                t.category,
-                t.type === TransactionType.Income ? 'Masuk' : 'Keluar',
-                (t.type === TransactionType.Income ? '+' : '-') + 'Rp' + t.amount.toLocaleString('id-ID'),
-            ]);
-
-            autoTable(doc, {
-                startY: 52,
-                head: [['No', 'Tanggal', 'Deskripsi', 'Kategori', 'Tipe', 'Jumlah (Rp)']],
-                body: rows,
-                theme: 'striped',
-                headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold', fontSize: 9 },
-                bodyStyles: { fontSize: 9, textColor: [30, 41, 59] },
-                columnStyles: {
-                    0: { cellWidth: 10, halign: 'center' },
-                    1: { cellWidth: 28 },
-                    4: { halign: 'center' },
-                    5: { halign: 'right', fontStyle: 'bold' },
-                },
-                didDrawCell: (data) => {
-                    if (data.column.index === 5 && data.section === 'body') {
-                        const txt = data.cell.text[0] || '';
-                        doc.setTextColor(txt.startsWith('+') ? 16 : 239, txt.startsWith('+') ? 185 : 68, txt.startsWith('+') ? 129 : 68);
-                    }
-                },
-            });
-        }
-
-        if (mode !== 'syahriyah') {
-            // — Total Summary
-            const openingBalance = getOpeningBalance();
-            const totalIncome = filtered.filter(t => t.type === TransactionType.Income).reduce((s, t) => s + t.amount, 0);
-            const totalExpense = filtered.filter(t => t.type === TransactionType.Expense).reduce((s, t) => s + t.amount, 0);
-            const net = totalIncome - totalExpense;
-            const finalBalance = openingBalance + net;
-
-            const lastY = (doc as any).lastAutoTable.finalY || 52;
-            const finalY = lastY + 8;
-            const sumX = pageW - 85;
-            doc.setFillColor(248, 250, 252);
-            doc.roundedRect(sumX - 4, finalY - 4, 75, 38, 3, 3, 'F');
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(71, 85, 105);
-            doc.text('Saldo Awal (Sebelumnya):', sumX, finalY + 3);
-            doc.setTextColor(30, 41, 59);
-            doc.text('Rp' + openingBalance.toLocaleString('id-ID'), pageW - 18, finalY + 3, { align: 'right' });
-
-            doc.setTextColor(71, 85, 105);
-            doc.text('Total Pemasukan Periode:', sumX, finalY + 10);
-            doc.setTextColor(16, 185, 129);
-            doc.text('Rp' + totalIncome.toLocaleString('id-ID'), pageW - 18, finalY + 10, { align: 'right' });
-
-            doc.setTextColor(71, 85, 105);
-            doc.text('Total Pengeluaran Periode:', sumX, finalY + 17);
-            doc.setTextColor(239, 68, 68);
-            doc.text('Rp' + totalExpense.toLocaleString('id-ID'), pageW - 18, finalY + 17, { align: 'right' });
-
-            doc.setTextColor(16, 185, 129);
-            doc.line(sumX - 4, finalY + 21, pageW - 14, finalY + 21);
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
-            doc.setTextColor(30, 41, 59);
-            doc.text('SALDO AKHIR:', sumX, finalY + 28);
-            doc.setTextColor(finalBalance >= 0 ? 16 : 239, finalBalance >= 0 ? 185 : 68, finalBalance >= 0 ? 129 : 68);
-            doc.text('Rp' + finalBalance.toLocaleString('id-ID'), pageW - 18, finalY + 28, { align: 'right' });
-
-            // — Signature Area (4 Signatures Grid 2x2)
-            const sigY = finalY + 50;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(9);
-            doc.setTextColor(30, 41, 59);
-
-            const col1 = 30;
-            const col2 = pageW - 30;
-
-            if (mode === 'summary') {
-                // Only Center signatures for summary report (Only 2 at the bottom)
-                doc.text('Bendahara PPHQ,', col1, sigY);
-                doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
-                doc.text('Ibu Nyai H. Nur Kholidah', col1, sigY + 23);
-
-                doc.text('Pengasuh PPHQ,', col2, sigY, { align: 'right' });
-                doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
-                doc.text('KH. Ainul Yakin, SQ', col2, sigY + 23, { align: 'right' });
-            } else {
-                // Row 1: Unit Level (Head Left, Treasurer Right)
-                doc.text('Pimpinan Unit,', col1, sigY);
-                doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
-                doc.text(currentUser?.unitHeadName || '( ............................ )', col1, sigY + 23);
-
-                doc.text('Bendahara Unit,', col2, sigY, { align: 'right' });
-                doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
-                doc.text(currentUser?.unitTreasurerName || '( ............................ )', col2, sigY + 23, { align: 'right' });
-
-                // Row 2: Center Level (Pengasuh Left, Treasurer Right)
-                const sigY2 = sigY + 40;
-                doc.text('Pengasuh PPHQ,', col1, sigY2);
-                doc.line(col1, sigY2 + 18, col1 + 50, sigY2 + 18);
-                doc.text('KH. Ainul Yakin, SQ', col1, sigY2 + 23);
-
-                doc.text('Bendahara PPHQ,', col2, sigY2, { align: 'right' });
-                doc.line(col2 - 50, sigY2 + 18, col2, sigY2 + 18);
-                doc.text('Ibu Nyai H. Nur Kholidah', col2, sigY2 + 23, { align: 'right' });
-            }
-        }
-
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        doc.setTextColor(148, 163, 184);
-        doc.text('Dokumen ini dihasilkan otomatis oleh Sistem Keuangan PPHQ', pageW / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
-
-        const filename = `${mode === 'syahriyah' ? 'Infaq_Bulanan' : mode === 'summary' ? 'Summary' : 'E-Statement'}_${displayBranch.replace(/\s/g, '_')}_${mode === 'syahriyah' ? selectedYear : startDate + '_sd_' + endDate}.pdf`;
-        doc.save(filename);
-        onClose();
-    };
-
-    const handlePrint = () => {
-        const filtered = getFiltered();
-        if (filtered.length === 0) {
-            showAlert("Data Kosong", 'Tidak ada data pada rentang tanggal tersebut.', "info");
-            return;
-        }
-
-        // Use portrait for most, landscape for syahriyah
         const doc = new jsPDF({ 
             orientation: mode === 'syahriyah' ? 'landscape' : 'portrait', 
             unit: 'mm', 
             format: 'a4' 
         });
         
-        // Re-use the exact same logic as handleDownloadPDF
-        // To avoid code duplication in this small file, we can just call a common function
-        // But for simplicity in this edit, I will implement the PDF generation and then trigger print
-        
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
-        const months = [
-            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-        ];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
-        // — Header bar
-        doc.setFillColor(16, 185, 129); // emerald-500
-        doc.rect(0, 0, pageW, 32, 'F');
+        const renderHeader = (isAppendix: boolean = false, appendixTitle: string = '') => {
+            // — Header bar
+            doc.setFillColor(16, 185, 129); // emerald-500
+            doc.rect(0, 0, pageW, isAppendix ? 20 : 32, 'F');
 
-        // — Title & Logo
-        const headerTitle = mode === 'syahriyah' ? 'LAPORAN INFAQ BULANAN PPHQ' : 'E-STATEMENT PPHQ FINANCE';
-        if (settings.appLogoUrl) {
-            try {
-                doc.addImage(settings.appLogoUrl, 'JPEG', 14, 6, 20, 20, undefined, 'FAST');
+            if (!isAppendix) {
+                const headerTitle = mode === 'syahriyah' ? 'LAPORAN INFAQ BULANAN PPHQ' : 'E-STATEMENT PPHQ FINANCE';
+                if (settings.appLogoUrl) {
+                    try {
+                        doc.addImage(settings.appLogoUrl, 'JPEG', 14, 6, 20, 20, undefined, 'FAST');
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(16);
+                        doc.setTextColor(255, 255, 255);
+                        doc.text(headerTitle, 38, 13);
+                        doc.setFontSize(10);
+                        doc.text(mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch.toUpperCase(), 38, 20);
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(mode === 'summary' ? 'Summary Performance Per Cabang' : mode === 'syahriyah' ? `Tahun Buku ${selectedYear}` : 'Laporan Pemasukan & Pengeluaran Kas', 38, 26);
+                    } catch (e) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(18);
+                        doc.setTextColor(255, 255, 255);
+                        doc.text(headerTitle, pageW / 2, 13, { align: 'center' });
+                    }
+                } else {
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(18);
+                    doc.setTextColor(255, 255, 255);
+                    doc.text(headerTitle, pageW / 2, 13, { align: 'center' });
+                }
+            } else {
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(16);
+                doc.setFontSize(12);
                 doc.setTextColor(255, 255, 255);
-                doc.text(headerTitle, 38, 13);
-                doc.setFontSize(10);
-                doc.text(mode === 'summary' ? 'LAPORAN RINGKASAN UNIT' : displayBranch.toUpperCase(), 38, 20);
+                doc.text(appendixTitle, 14, 13);
+                
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'normal');
-                doc.text(mode === 'summary' ? 'Summary Performance Per Cabang' : mode === 'syahriyah' ? `Tahun Buku ${selectedYear}` : 'Laporan Pemasukan & Pengeluaran Kas', 38, 26);
-            } catch (e) {
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(18);
-                doc.setTextColor(255, 255, 255);
-                doc.text(headerTitle, pageW / 2, 13, { align: 'center' });
+                doc.text(`${displayBranch.toUpperCase()} | ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`, pageW - 14, 13, { align: 'right' });
             }
-        }
+        };
 
-        // — Meta info
+        renderHeader();
+
+        // — Meta info box (Only on first page)
         doc.setTextColor(71, 85, 105);
         doc.setFontSize(9);
         const periodText = mode === 'syahriyah' ? `Unit: ${displayBranch}` : `Periode: ${new Date(startDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })} – ${new Date(endDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`;
@@ -408,7 +148,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         doc.text(periodText, 19, 43);
         doc.text(printedText, pageW - 19, 43, { align: 'right' });
 
-        // — Watermark Logo (Transparent Background)
+        // — Watermark Logo
         if (settings.appLogoUrl) {
             try {
                 const opacity = 0.1;
@@ -416,7 +156,6 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 const imgH = 80;
                 const x = (pageW - imgW) / 2;
                 const y = (pageH - imgH) / 2;
-                
                 // @ts-ignore
                 doc.saveGraphicsState();
                 // @ts-ignore
@@ -424,12 +163,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 doc.addImage(settings.appLogoUrl, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
                 // @ts-ignore
                 doc.restoreGraphicsState();
-            } catch (e) {
-                console.warn("Watermark error:", e);
-            }
+            } catch (e) {}
         }
 
-        // — Table
+        // — Data Rendering
         if (mode === 'summary') {
             const summaryData = getBranchSummary(filtered);
             autoTable(doc, {
@@ -518,7 +255,6 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             doc.setTextColor(finalBalance >= 0 ? 16 : 239, finalBalance >= 0 ? 185 : 68, finalBalance >= 0 ? 129 : 68);
             doc.text('Rp' + finalBalance.toLocaleString('id-ID'), pageW - 18, finalY + 28, { align: 'right' });
 
-            // — Signatures
             const sigY = finalY + 50;
             const col1 = 30;
             const col2 = pageW - 30;
@@ -548,7 +284,6 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 doc.text('Ibu Nyai H. Nur Kholidah', col2, sigY2 + 23, { align: 'right' });
             }
         } else {
-            // Syahriyah signatures
             const lastY = (doc as any).lastAutoTable.finalY || 52;
             const sigY = lastY + 25;
             const col1 = 30;
@@ -562,17 +297,103 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             doc.text(currentUser?.unitTreasurerName || '( ............................ )', col2, sigY + 23, { align: 'right' });
         }
 
+        // — Appendix Section (Notas)
+        if (mode === 'detailed') {
+            const transactionsWithPhotos = filtered
+                .map((t, index) => ({ ...t, originalIndex: index + 1 }))
+                .filter(t => t.attachmentUrl);
+
+            const incomePhotos = transactionsWithPhotos.filter(t => t.type === TransactionType.Income);
+            const expensePhotos = transactionsWithPhotos.filter(t => t.type === TransactionType.Expense);
+
+            const renderPhotos = async (photos: any[], sectionTitle: string) => {
+                if (photos.length === 0) return;
+
+                let currentY = 30;
+                let col = 0;
+                const margin = 14;
+                const gap = 10;
+                const photoW = (pageW - (margin * 2) - gap) / 2;
+                const photoH = 75; // Fixed area height
+
+                doc.addPage();
+                renderHeader(true, sectionTitle);
+
+                for (const t of photos) {
+                    if (currentY + photoH + 20 > pageH) {
+                        doc.addPage();
+                        renderHeader(true, sectionTitle);
+                        currentY = 30;
+                        col = 0;
+                    }
+
+                    const xPos = margin + (col * (photoW + gap));
+                    
+                    // Label
+                    doc.setFillColor(t.type === TransactionType.Income ? 16 : 239, t.type === TransactionType.Income ? 185 : 68, t.type === TransactionType.Income ? 129 : 68);
+                    doc.roundedRect(xPos, currentY, 35, 7, 2, 2, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8);
+                    doc.setTextColor(255, 255, 255);
+                    doc.text(`NOTA NO. ${t.originalIndex}`, xPos + 17.5, currentY + 5, { align: 'center' });
+
+                    // Internal Link to first page
+                    doc.link(xPos, currentY, 35, 7, { pageNumber: 1 });
+
+                    // Image Smart Scaling
+                    try {
+                        const dims = await getImageDimensions(t.attachmentUrl);
+                        const ratio = dims.w / dims.h;
+                        
+                        let drawW = photoW;
+                        let drawH = photoW / ratio;
+                        
+                        if (drawH > photoH) {
+                            drawH = photoH;
+                            drawW = photoH * ratio;
+                        }
+                        
+                        const xOffset = (photoW - drawW) / 2;
+                        const yOffset = (photoH - drawH) / 2;
+                        
+                        doc.addImage(t.attachmentUrl, 'JPEG', xPos + xOffset, currentY + 10 + yOffset, drawW, drawH, undefined, 'FAST');
+                    } catch (e) {
+                        doc.setFontSize(8);
+                        doc.setTextColor(150, 150, 150);
+                        doc.text("[Gagal memuat gambar]", xPos + photoW/2, currentY + 10 + photoH/2, { align: 'center' });
+                    }
+
+                    if (col === 1) {
+                        col = 0;
+                        currentY += photoH + 25;
+                    } else {
+                        col = 1;
+                    }
+                }
+            };
+
+            await renderPhotos(incomePhotos, "LAMPIRAN NOTA PEMASUKAN");
+            await renderPhotos(expensePhotos, "LAMPIRAN NOTA PENGELUARAN");
+        }
+
         // — Footer
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7);
         doc.setTextColor(148, 163, 184);
         doc.text('Dokumen ini dihasilkan otomatis oleh Sistem Keuangan PPHQ', pageW / 2, pageH - 10, { align: 'center' });
 
-        // Trigger Print Dialog
-        doc.autoPrint();
-        window.open(doc.output('bloburl'), '_blank');
+        if (action === 'download') {
+            const filename = `${mode === 'syahriyah' ? 'Infaq_Bulanan' : mode === 'summary' ? 'Summary' : 'E-Statement'}_${displayBranch.replace(/\s/g, '_')}_${mode === 'syahriyah' ? selectedYear : startDate + '_sd_' + endDate}.pdf`;
+            doc.save(filename);
+        } else {
+            doc.autoPrint();
+            window.open(doc.output('bloburl'), '_blank');
+        }
         onClose();
     };
+
+    const handleDownloadPDF = () => handleExportPDF('download');
+    const handlePrint = () => handleExportPDF('print');
 
     const handleExportCSV = () => {
         const filtered = getFiltered();

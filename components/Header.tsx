@@ -52,13 +52,13 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                         href="https://wa.me/6281553854670?text=Halo%20Admin,%20saya%20menemukan%20bug%20di%20aplikasi%20PPHQ%20Finance..."
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hidden sm:flex items-center gap-2 px-3 py-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all group"
+                        className="flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all group"
                         title="Lapor Bug"
                     >
                         <svg className="w-4 h-4 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Lapor Bug</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Lapor Bug</span>
                     </a>
 
                     <div className="w-px h-8 bg-slate-100 hidden sm:block" />
