@@ -434,7 +434,7 @@ const SyahriyahPage = () => {
                             </div>
 
                             <div>
-                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nota</label>
+                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nota <span className="normal-case font-normal text-slate-400 text-[8px] ml-1">(max 200kb)</span></label>
                                 <div className="mt-1 space-y-3">
                                     <div className="flex gap-2">
                                         <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex-1 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"><CameraIcon className="w-3.5 h-3.5" /> Kamera</button>

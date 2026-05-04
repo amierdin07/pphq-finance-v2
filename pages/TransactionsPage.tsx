@@ -254,7 +254,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
 
                             {/* Receipt Photo Section */}
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Foto Nota (Opsional)</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Foto Nota (Opsional) <span className="normal-case font-normal text-slate-400 text-[10px] ml-1">(max 200kb)</span></label>
                                 <div className="mt-2 space-y-4">
                                     <div className="flex gap-3">
                                         <button 
