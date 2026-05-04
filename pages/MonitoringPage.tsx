@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
-import { Transaction, TransactionType, Branch, TransactionNature } from '../types';
+import { Transaction, TransactionType, Branch, TransactionNature, Role } from '../types';
 import { BranchIcon } from '../constants';
 
 const BranchSummaryCard = ({ branch, transactions }: { branch: Branch, transactions: Transaction[] }) => {

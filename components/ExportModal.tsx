@@ -76,6 +76,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
 
         const doc = new jsPDF({ orientation: mode === 'syahriyah' ? 'landscape' : 'portrait', unit: 'mm', format: 'a4' });
         const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
 
         const months = [
             'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',

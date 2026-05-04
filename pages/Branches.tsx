@@ -70,7 +70,7 @@ const Branches = () => {
 
     // State for User Modal
     const [isUserModalOpen, setUserModalOpen] = useState(false);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
     const [userName, setUserName] = useState('');
     const [userEmail, setUserEmail] = useState('');
     const [userPassword, setUserPassword] = useState('');
@@ -120,7 +120,7 @@ const Branches = () => {
             showAlert('Peringatan', 'Silakan buat unit terlebih dahulu sebelum menambahkan pengguna.', 'danger');
             return;
         }
-        setCurrentUser(user);
+        setEditingUser(user);
         setUserName(user?.name || '');
         setUserEmail(user?.email || '');
         setUserPassword(user?.password || ''); // Admin can see and change
@@ -142,8 +142,8 @@ const Branches = () => {
             password: userPassword
         };
 
-        if (currentUser) {
-            await updateUserByAdmin({ ...currentUser, ...userData });
+        if (editingUser) {
+            await updateUserByAdmin({ ...editingUser, ...userData });
         } else {
             if (!userPassword) {
                 showAlert('Peringatan', "Password wajib diisi untuk pengguna baru.", 'danger');
@@ -313,7 +313,7 @@ const Branches = () => {
             {isUserModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex justify-center items-center p-4" onClick={closeUserModal}>
                     <div className="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-                        <h2 className="text-2xl font-black text-slate-800 mb-8">{currentUser ? 'Edit' : 'Tambah'} Pengguna</h2>
+                        <h2 className="text-2xl font-black text-slate-800 mb-8">{editingUser ? 'Edit' : 'Tambah'} Pengguna</h2>
                         <form onSubmit={handleUserSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -328,7 +328,7 @@ const Branches = () => {
                              <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Kata Sandi (Password)</label>
                                 <input type="text" value={userPassword} onChange={e => setUserPassword(e.target.value)} className="mt-2 block w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-mono text-slate-800" required />
-                                {currentUser && <p className="text-[9px] text-slate-400 mt-2 font-medium italic">Ganti kata sandi langsung di sini jika diperlukan.</p>}
+                                {editingUser && <p className="text-[9px] text-slate-400 mt-2 font-medium italic">Ganti kata sandi langsung di sini jika diperlukan.</p>}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
