@@ -309,25 +309,29 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
             const renderPhotos = async (photos: any[], sectionTitle: string) => {
                 if (photos.length === 0) return;
 
+
                 let currentY = 30;
                 let col = 0;
+                let rowCount = 0;
                 const margin = 14;
-                const gap = 10;
-                const photoW = (pageW - (margin * 2) - gap) / 2;
-                const photoH = 75; // Fixed area height
+                const gapX = 10;
+                const gapY = 12;
+                const photoW = (pageW - (margin * 2) - gapX) / 2;
+                const photoH = 68; // Adjusted height to fit 3 rows
 
                 doc.addPage();
                 renderHeader(true, sectionTitle);
 
                 for (const t of photos) {
-                    if (currentY + photoH + 20 > pageH) {
+                    if (rowCount === 3) { // 3 rows filled
                         doc.addPage();
                         renderHeader(true, sectionTitle);
                         currentY = 30;
                         col = 0;
+                        rowCount = 0;
                     }
 
-                    const xPos = margin + (col * (photoW + gap));
+                    const xPos = margin + (col * (photoW + gapX));
                     
                     // Label
                     doc.setFillColor(t.type === TransactionType.Income ? 16 : 239, t.type === TransactionType.Income ? 185 : 68, t.type === TransactionType.Income ? 129 : 68);
@@ -365,11 +369,13 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
 
                     if (col === 1) {
                         col = 0;
-                        currentY += photoH + 25;
+                        currentY += photoH + gapY + 10; // Move to next row
+                        rowCount++;
                     } else {
                         col = 1;
                     }
                 }
+
             };
 
             await renderPhotos(incomePhotos, "LAMPIRAN NOTA PEMASUKAN");
