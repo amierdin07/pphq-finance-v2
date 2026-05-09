@@ -19,7 +19,8 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
 const SettingsPage = () => {
-    const { currentUser, allTransactions, settings, updateSettings, updateUser, logout, resetData, showAlert } = useAppContext();
+    const { currentUser, allTransactions, branches, students, settings, updateSettings, updateUser, moveStudents, logout, resetData, showAlert, showConfirm } = useAppContext();
+
     const [token, setToken] = useState<string | null>(localStorage.getItem('google_access_token'));
     const [profile, setProfile] = useState<any | null>(JSON.parse(localStorage.getItem('google_profile') || 'null'));
     const [isSyncing, setIsSyncing] = useState(false);
@@ -461,7 +462,73 @@ const SettingsPage = () => {
                             </div>
                         </div>
 
+
+                        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                            <h2 className="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                <span className="p-2 bg-indigo-50 rounded-lg"><svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg></span>
+                                Alat Perbaikan Data
+                            </h2>
+                            <p className="text-slate-400 text-sm mb-6 ml-11">Pindahkan data santri antar unit jika terjadi salah import.</p>
+                            
+                            <div className="ml-11 space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Dari Unit (Asal)</label>
+                                        <select id="fromBranch" className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500">
+                                            <option value="">-- Pilih Unit Asal --</option>
+                                            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Ke Unit (Tujuan)</label>
+                                        <select id="toBranch" className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500">
+                                            <option value="">-- Pilih Unit Tujuan --</option>
+                                            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const fromId = (document.getElementById('fromBranch') as HTMLSelectElement).value;
+                                        const toId = (document.getElementById('toBranch') as HTMLSelectElement).value;
+                                        if (!fromId || !toId || fromId === toId) {
+                                            showAlert("Peringatan", "Pilih unit asal dan tujuan yang berbeda!", "danger");
+                                            return;
+                                        }
+                                        const fromName = branches.find(b => b.id === fromId)?.name;
+                                        const toName = branches.find(b => b.id === toId)?.name;
+                                        const count = students.filter(s => s.branchId === fromId).length;
+                                        
+                                        if (count === 0) {
+                                            showAlert("Info", `Tidak ada santri di unit ${fromName}.`, "info");
+                                            return;
+                                        }
+
+                                        showConfirm(
+                                            "Pindahkan Santri?",
+                                            `Yakin ingin memindahkan ${count} santri dari unit ${fromName} ke ${toName}? Data pembayaran infaq bulanan mereka juga akan dipindahkan ke unit baru.`,
+                                            async () => {
+                                                try {
+                                                    await moveStudents(fromId, toId);
+                                                    showAlert("Berhasil", `${count} santri telah dipindahkan ke ${toName}.`, "success");
+                                                } catch (err) {
+                                                    showAlert("Gagal", "Terjadi kesalahan saat memindahkan data.", "danger");
+                                                }
+                                            },
+                                            'info',
+                                            'Ya, Pindahkan'
+                                        );
+                                    }}
+                                    className="px-6 py-3 bg-indigo-500 text-white font-bold rounded-xl hover:bg-indigo-600 transition-all text-xs shadow-lg shadow-indigo-500/20"
+                                >
+                                    Pindahkan Santri Masal
+                                </button>
+                            </div>
+                        </div>
+
+
                         <div className="bg-red-50 p-8 rounded-[2rem] border border-red-100">
+
                             <h2 className="text-xl font-bold text-red-800 mb-2 flex items-center gap-2">
                                 <span className="p-2 bg-red-100 rounded-lg"><TrashIcon className="w-5 h-5 text-red-600" /></span>
                                 Zona Bahaya

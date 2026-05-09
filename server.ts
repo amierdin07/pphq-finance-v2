@@ -176,11 +176,46 @@ async function startServer() {
         return res.json({ status: "success", data: { updatedStudent } });
       }
 
+
+
       if (action === "deleteStudent") {
         const { id } = payload;
         db.prepare("DELETE FROM students WHERE id = ?").run(id);
         return res.json({ status: "success", data: { id } });
       }
+
+      if (action === "deleteStudents") {
+        const { ids } = payload;
+        const placeholders = ids.map(() => '?').join(',');
+        db.prepare(`DELETE FROM students WHERE id IN (${placeholders})`).run(...ids);
+        return res.json({ status: "success" });
+      }
+
+
+
+      if (action === "moveStudents") {
+        const { fromBranchId, toBranchId } = payload;
+        
+        db.transaction(() => {
+          // 1. Get student IDs from source branch
+          const studentsToMove = db.prepare("SELECT id FROM students WHERE branchId = ?").all(fromBranchId) as any[];
+          const studentIds = studentsToMove.map(s => s.id);
+          
+          if (studentIds.length > 0) {
+            // 2. Update students
+            db.prepare("UPDATE students SET branchId = ? WHERE branchId = ?").run(toBranchId, fromBranchId);
+            
+            // 3. Update transactions for these students specifically
+            // This is safer than updating by branchId alone
+            const placeholders = studentIds.map(() => '?').join(',');
+            db.prepare(`UPDATE transactions SET branchId = ? WHERE item IN (${placeholders})`).run(toBranchId, ...studentIds);
+          }
+        })();
+        
+        return res.json({ status: "success" });
+      }
+
+
 
       if (action === "resetData") {
         db.transaction(() => {

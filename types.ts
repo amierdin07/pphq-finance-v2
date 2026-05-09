@@ -99,10 +99,16 @@ export interface AppContextType {
   resetData: () => Promise<void>;
   updateUser: (user: User) => Promise<void>;
   updateSettings: (settings: AppSettings) => Promise<void>;
+
   // Student management
   addStudent: (student: Omit<Student, 'id'>) => Promise<void>;
   updateStudent: (student: Student) => Promise<void>;
+
   deleteStudent: (id: string) => Promise<void>;
+  deleteStudents: (ids: string[]) => Promise<void>;
+  moveStudents: (fromBranchId: string, toBranchId: string) => Promise<void>;
+
+
   // Transaction management
   addTransaction: (transaction: Omit<Transaction, 'id' | 'createdBy'>) => Promise<void>;
   updateTransaction: (transaction: Transaction) => Promise<void>;

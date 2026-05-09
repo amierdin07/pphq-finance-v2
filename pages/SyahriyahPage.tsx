@@ -7,7 +7,9 @@ import { compressImage } from '../utils/imageUtils';
 import ExportModal from '../components/ExportModal';
 
 const SyahriyahPage = () => {
-    const { currentUser, allTransactions, branches, students, addStudent, updateStudent, deleteStudent, addTransaction, updateTransaction, deleteTransaction, globalSearchTerm, setGlobalSearchTerm, showConfirm, showAlert } = useAppContext();
+    const { currentUser, allTransactions, branches, students, addStudent, updateStudent, deleteStudent, deleteStudents, addTransaction, updateTransaction, deleteTransaction, globalSearchTerm, setGlobalSearchTerm, showConfirm, showAlert } = useAppContext();
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
     const importInputRef = useRef<HTMLInputElement>(null);
@@ -219,7 +221,32 @@ const SyahriyahPage = () => {
         }
     };
 
+
+    const handleToggleSelect = (id: string) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
+    const handleSelectAll = () => {
+        if (selectedIds.length > 0 && selectedIds.length === filteredStudents.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(filteredStudents.map(s => s.id));
+        }
+    };
+
+    const handleBulkDelete = () => {
+        showConfirm(
+            "Hapus Masal Santri",
+            `Yakin ingin menghapus ${selectedIds.length} santri terpilih? Semua data pembayaran mereka akan tetap ada namun tidak lagi terikat dengan nama santri ini.`,
+            async () => {
+                await deleteStudents(selectedIds);
+                setSelectedIds([]);
+            }
+        );
+    };
+
     const handleDownloadFormat = () => {
+
         const headers = "Nama Lengkap,Alamat,No HP Orang Tua\n";
         const blob = new Blob([headers], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
@@ -229,33 +256,51 @@ const SyahriyahPage = () => {
         a.click();
     };
 
+
     const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            const text = event.target?.result as string;
-            const lines = text.split('\n');
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                const [name, address, parentPhone] = line.split(',');
-                if (name) {
-                    await addStudent({
-                        name: name.trim(),
-                        address: address?.trim() || '',
-                        parentPhone: parentPhone?.trim() || '',
-                        isActive: true,
-                        branchId: viewingBranchId || '1'
-                    });
-                }
-            }
-            showAlert("Berhasil", 'Import selesai!', "success");
-            e.target.value = '';
-        };
-        reader.readAsText(file);
+        showConfirm(
+            "Konfirmasi Import",
+            `Anda akan mengimport data santri ke unit "${currentBranch?.name}". Pastikan file CSV sudah sesuai format. Lanjutkan?`,
+            async () => {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const text = event.target?.result as string;
+                    const lines = text.split(/\r?\n/);
+                    let importedCount = 0;
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        // Support both comma and semicolon
+                        const delimiter = line.includes(';') ? ';' : ',';
+                        const [name, address, parentPhone] = line.split(delimiter);
+                        
+                        if (name && name.trim()) {
+                            await addStudent({
+                                name: name.trim().replace(/^"|"$/g, ''), // Remove quotes if any
+                                address: (address?.trim() || '').replace(/^"|"$/g, ''),
+                                parentPhone: (parentPhone?.trim() || '').replace(/^"|"$/g, ''),
+                                isActive: true,
+                                branchId: viewingBranchId || '1'
+                            });
+                            importedCount++;
+                        }
+                    }
+                    showAlert("Berhasil", `Import selesai! ${importedCount} santri berhasil ditambahkan ke ${currentBranch?.name}.`, "success");
+                };
+                reader.readAsText(file);
+            },
+            'info',
+            'Ya, Import'
+        );
+        
+        e.target.value = '';
     };
+
 
     const openImageModal = (url: string) => {
         setSelectedImageUrl(url);
@@ -312,7 +357,14 @@ const SyahriyahPage = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-3">
+                    {selectedIds.length > 0 && (
+                        <button onClick={handleBulkDelete} className="px-4 py-3 bg-red-50 text-red-600 border border-red-100 font-bold text-[10px] uppercase tracking-widest rounded-2xl hover:bg-red-100 transition-all flex items-center gap-2">
+                            <TrashIcon className="w-3.5 h-3.5" />
+                            Hapus ({selectedIds.length})
+                        </button>
+                    )}
                     <button onClick={handleDownloadFormat} className="px-4 py-3 bg-white border border-slate-100 text-slate-500 font-bold text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all">Format</button>
+
                     <button onClick={() => importInputRef.current?.click()} className="px-4 py-3 bg-white border border-slate-100 text-slate-500 font-bold text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all">
                         Import
                         <input type="file" ref={importInputRef} className="hidden" accept=".csv" onChange={handleImportExcel} />
@@ -345,7 +397,18 @@ const SyahriyahPage = () => {
                     <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead>
                             <tr className="bg-slate-50/50">
-                                <th className="sticky left-0 z-20 bg-slate-50/80 backdrop-blur-sm px-4 sm:px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[10px] border-b border-slate-100 w-[160px] sm:w-[380px]">Data Santri</th>
+                                <th className="sticky left-0 z-20 bg-slate-50/80 backdrop-blur-sm px-4 sm:px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[10px] border-b border-slate-100 w-[160px] sm:w-[380px]">
+                                    <div className="flex items-center gap-3">
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                                            checked={filteredStudents.length > 0 && selectedIds.length === filteredStudents.length}
+                                            onChange={handleSelectAll}
+                                        />
+                                        <span>Data Santri</span>
+                                    </div>
+                                </th>
+
                                 {months.map(m => (
                                     <th key={m} className="px-4 py-5 font-bold text-slate-400 uppercase tracking-widest text-[10px] border-b border-slate-100 text-center min-w-[110px]">{m}</th>
                                 ))}
@@ -356,10 +419,18 @@ const SyahriyahPage = () => {
                                 <tr key={student.id} className="hover:bg-slate-50/30 transition-colors group">
                                     <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/80 backdrop-blur-sm px-4 sm:px-8 py-4 border-r border-slate-50">
                                         <div className="flex items-center gap-4">
+                                            <input 
+                                                type="checkbox" 
+                                                className="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 cursor-pointer flex-shrink-0"
+                                                checked={selectedIds.includes(student.id)}
+                                                onChange={() => handleToggleSelect(student.id)}
+                                                onClick={e => e.stopPropagation()}
+                                            />
                                             <div className="flex items-center gap-2 sm:gap-3 overflow-hidden flex-1">
                                                 <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${student.isActive ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500'} hidden xs:block`}>
                                                     <UserIcon className="w-3.5 h-3.5 sm:w-4 h-4" />
                                                 </div>
+
                                                 <div className="overflow-hidden flex-1">
                                                     <p className={`font-bold truncate text-[11px] sm:text-sm leading-tight mb-0.5 ${student.isActive ? 'text-slate-700' : 'text-red-600'}`}>{student.name}</p>
                                                     {student.parentPhone && (
@@ -432,11 +503,12 @@ const SyahriyahPage = () => {
                                                         {student.isActive && (
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); sendWhatsAppNotification(student, months[idx], '', false); }}
-                                                                className="opacity-0 group-hover:opacity-100 group-hover/wa:opacity-100 transition-opacity p-0.5 text-slate-300 hover:text-emerald-500"
+                                                                className="opacity-0 group-hover:opacity-100 group-hover/wa:opacity-100 transition-opacity p-0.5 text-red-300 hover:text-red-500"
                                                                 title="Kirim Pengingat WA"
                                                             >
                                                                 <WhatsAppIcon className="w-3.5 h-3.5" />
                                                             </button>
+
                                                         )}
                                                     </div>
                                                 )}

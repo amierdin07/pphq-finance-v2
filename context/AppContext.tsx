@@ -55,6 +55,10 @@ const defaultContextValue: AppContextType = {
   addStudent: async () => {},
   updateStudent: async () => {},
   deleteStudent: async () => {},
+  deleteStudents: async () => {},
+  moveStudents: async () => {},
+
+
   addTransaction: async () => {},
   updateTransaction: async () => {},
   deleteTransaction: async () => {},
@@ -301,10 +305,23 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
     }, []);
 
+
     const deleteStudent = useCallback(async (id: string) => {
         await callApi('deleteStudent', { id });
         setStudents(prev => prev.filter(s => s.id !== id));
     }, []);
+
+    const deleteStudents = useCallback(async (ids: string[]) => {
+        await callApi('deleteStudents', { ids });
+        setStudents(prev => prev.filter(s => !ids.includes(s.id)));
+    }, []);
+
+    
+    const moveStudents = useCallback(async (fromBranchId: string, toBranchId: string) => {
+        await callApi('moveStudents', { fromBranchId, toBranchId });
+        await refreshAllData();
+    }, [refreshAllData]);
+
 
     const addTransaction = useCallback(async (transaction: Omit<Transaction, 'id' | 'createdBy'>) => {
         if (!currentUser) return;
@@ -446,6 +463,10 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             addStudent,
             updateStudent,
             deleteStudent,
+            deleteStudents,
+            moveStudents,
+
+
             addTransaction,
             updateTransaction,
             deleteTransaction,
