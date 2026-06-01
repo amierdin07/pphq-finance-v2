@@ -58,6 +58,18 @@ const SyahriyahPage = () => {
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
 
+    const isPaymentForPeriod = (transaction: Transaction, monthIndex: number) => {
+        const periodText = transaction.description.split(' - ')[0].trim();
+        const periodMatch = periodText.match(/^(?:Infaq Bulanan|Syahriyah)\s+(.+?)\s+(\d{4})$/);
+
+        if (periodMatch) {
+            return periodMatch[1] === months[monthIndex] && Number(periodMatch[2]) === selectedYear;
+        }
+
+        const date = new Date(transaction.date);
+        return periodText.includes(months[monthIndex]) && date.getFullYear() === selectedYear;
+    };
+
     const currentBranch = useMemo(() => branches.find(b => b.id === viewingBranchId), [branches, viewingBranchId]);
 
     const filteredStudents = useMemo(() => {
@@ -77,8 +89,7 @@ const SyahriyahPage = () => {
 
     const getPayment = (studentId: string, studentName: string, monthIndex: number) => {
         return infaqBulananPayments.find(t => {
-            const date = new Date(t.date);
-            const isCorrectPeriod = t.description.includes(months[monthIndex]) && date.getFullYear() === selectedYear;
+            const isCorrectPeriod = isPaymentForPeriod(t, monthIndex);
             
             // Prefer matching by studentId (stored in t.item)
             if (t.item === studentId) return isCorrectPeriod;

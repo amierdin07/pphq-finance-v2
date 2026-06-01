@@ -45,6 +45,18 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
 
     const displayBranch = branchName || 'semua unit';
 
+    const isSyahriyahPaymentForPeriod = (transaction: Transaction, monthName: string) => {
+        const periodText = transaction.description.split(' - ')[0].trim();
+        const periodMatch = periodText.match(/^(?:Infaq Bulanan|Syahriyah)\s+(.+?)\s+(\d{4})$/);
+
+        if (periodMatch) {
+            return periodMatch[1] === monthName && Number(periodMatch[2]) === selectedYear;
+        }
+
+        const date = new Date(transaction.date);
+        return periodText.includes(monthName) && date.getFullYear() === selectedYear;
+    };
+
     const getBranchSummary = (filtered: Transaction[]) => {
         const summary: Record<string, { income: number, expense: number }> = {};
         branches.forEach(b => {
@@ -66,7 +78,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
         }));
     };
 
-    // ── Real PDF download using jsPDF ─────────────────────────────
+    // Real PDF download using jsPDF
     const getImageDimensions = (url: string): Promise<{ w: number, h: number }> => {
         return new Promise((resolve) => {
             const img = new Image();
@@ -182,8 +194,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 const rowData: any[] = [i + 1, s.name];
                 months.forEach((_, mIdx) => {
                     const p = transactions.find(t => {
-                        const date = new Date(t.date);
-                        const isCorrectPeriod = t.description.includes(months[mIdx]) && date.getFullYear() === selectedYear;
+                        const isCorrectPeriod = isSyahriyahPaymentForPeriod(t, months[mIdx]);
                         if (t.item === s.id) return isCorrectPeriod;
                         return isCorrectPeriod && t.description.includes(s.name);
                     });
@@ -266,7 +277,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 doc.text('Ibu Nyai H. Nur Kholidah', col1, sigY + 23);
                 doc.text('Pengasuh PPHQ,', col2, sigY, { align: 'right' });
                 doc.line(col2 - 50, sigY + 18, col2, sigY + 18);
-                doc.text('KH. Ainul Yakin, SQ', col2, sigY + 23, { align: 'right' });
+                doc.text('KH. Ainul Yaqin S.Q', col2, sigY + 23, { align: 'right' });
             } else {
                 doc.text('Pimpinan Unit,', col1, sigY);
                 doc.line(col1, sigY + 18, col1 + 50, sigY + 18);
@@ -278,7 +289,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 const sigY2 = sigY + 40;
                 doc.text('Pengasuh PPHQ,', col1, sigY2);
                 doc.line(col1, sigY2 + 18, col1 + 50, sigY2 + 18);
-                doc.text('KH. Ainul Yakin, SQ', col1, sigY2 + 23);
+                doc.text('KH. Ainul Yaqin S.Q', col1, sigY2 + 23);
                 doc.text('Bendahara PPHQ,', col2, sigY2, { align: 'right' });
                 doc.line(col2 - 50, sigY2 + 18, col2, sigY2 + 18);
                 doc.text('Ibu Nyai H. Nur Kholidah', col2, sigY2 + 23, { align: 'right' });
@@ -440,8 +451,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                     const row = [i + 1, `"${s.name}"`];
                     months.forEach((_, mIdx) => {
                         const p = transactions.find(t => {
-                            const date = new Date(t.date);
-                            const isCorrectPeriod = t.description.includes(months[mIdx]) && date.getFullYear() === selectedYear;
+                            const isCorrectPeriod = isSyahriyahPaymentForPeriod(t, months[mIdx]);
                             if (t.item === s.id) return isCorrectPeriod;
                             return isCorrectPeriod && t.description.includes(s.name);
                         });
@@ -498,8 +508,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, transactions
                 const row = [`<td>${i+1}</td>`, `<td>${s.name}</td>`];
                 months.forEach((_, mIdx) => {
                     const p = transactions.find(t => {
-                        const date = new Date(t.date);
-                        const isCorrectPeriod = t.description.includes(months[mIdx]) && date.getFullYear() === selectedYear;
+                        const isCorrectPeriod = isSyahriyahPaymentForPeriod(t, months[mIdx]);
                         if (t.item === s.id) return isCorrectPeriod;
                         return isCorrectPeriod && t.description.includes(s.name);
                     });
