@@ -102,6 +102,16 @@ export interface AppContextType {
 
   // Student management
   addStudent: (student: Omit<Student, 'id'>) => Promise<void>;
+  importStudentsWithPayments: (
+    branchId: string,
+    year: number,
+    importData: Array<{
+      name: string;
+      address?: string;
+      parentPhone?: string;
+      payments: Record<string, number>;
+    }>
+  ) => Promise<void>;
   updateStudent: (student: Student) => Promise<void>;
 
   deleteStudent: (id: string) => Promise<void>;

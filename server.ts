@@ -168,6 +168,44 @@ async function startServer() {
         return res.json({ status: "success", data: { newStudent } });
       }
 
+      if (action === "importStudentsWithPayments") {
+        const { branchId, year, importData, createdBy } = payload;
+        const months = [
+          'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+
+        db.transaction(() => {
+          for (const item of importData) {
+            const studentId = generateId();
+            // 1. Insert student
+            db.prepare("INSERT INTO students (id, name, address, parentPhone, isActive, branchId) VALUES (?, ?, ?, ?, 1, ?)")
+              .run(studentId, item.name, item.address || null, item.parentPhone || null, branchId);
+
+            // 2. Insert payments if any
+            if (item.payments) {
+              for (const [monthName, amount] of Object.entries(item.payments)) {
+                if (amount && (amount as number) > 0) {
+                  const txId = generateId();
+                  const monthIndex = months.indexOf(monthName);
+                  const displayMonthIndex = monthIndex !== -1 ? monthIndex : 0;
+                  const monthStr = String(displayMonthIndex + 1).padStart(2, '0');
+                  const txDate = `${year}-${monthStr}-10T08:00:00.000Z`;
+                  const txDescription = `Infaq Bulanan ${monthName} ${year} - ${item.name}`;
+
+                  db.prepare(`
+                    INSERT INTO transactions (id, date, description, amount, category, type, nature, branchId, createdBy, item)
+                    VALUES (?, ?, ?, ?, 'Infaq Bulanan', 'Income', 'Money', ?, ?, ?)
+                  `).run(txId, txDate, txDescription, amount, branchId, createdBy || null, studentId);
+                }
+              }
+            }
+          }
+        })();
+
+        return res.json({ status: "success" });
+      }
+
       if (action === "updateStudent") {
         const { student } = payload;
         db.prepare("UPDATE students SET name = ?, address = ?, parentPhone = ?, isActive = ?, branchId = ? WHERE id = ?")

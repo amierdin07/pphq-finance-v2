@@ -7,7 +7,7 @@ import { compressImage } from '../utils/imageUtils';
 import ExportModal from '../components/ExportModal';
 
 const SyahriyahPage = () => {
-    const { currentUser, allTransactions, branches, students, addStudent, updateStudent, deleteStudent, deleteStudents, addTransaction, updateTransaction, deleteTransaction, globalSearchTerm, setGlobalSearchTerm, showConfirm, showAlert } = useAppContext();
+    const { currentUser, allTransactions, branches, students, addStudent, importStudentsWithPayments, updateStudent, deleteStudent, deleteStudents, addTransaction, updateTransaction, deleteTransaction, globalSearchTerm, setGlobalSearchTerm, showConfirm, showAlert } = useAppContext();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -257,13 +257,12 @@ const SyahriyahPage = () => {
     };
 
     const handleDownloadFormat = () => {
-
-        const headers = "Nama Lengkap,Alamat,No HP Orang Tua\n";
+        const headers = "Nama Lengkap,Alamat,No HP Orang Tua,Januari,Februari,Maret,April,Mei,Juni,Juli,Agustus,September,Oktober,November,Desember\n";
         const blob = new Blob([headers], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'format_import_santri.csv';
+        a.download = 'format_import_santri_dan_pembayaran.csv';
         a.click();
     };
 
@@ -274,13 +273,14 @@ const SyahriyahPage = () => {
 
         showConfirm(
             "Konfirmasi Import",
-            `Anda akan mengimport data santri ke unit "${currentBranch?.name}". Pastikan file CSV sudah sesuai format. Lanjutkan?`,
+            `Anda akan mengimport data santri beserta pembayaran bulanan untuk tahun ${selectedYear} ke unit "${currentBranch?.name}". Pastikan file CSV sudah sesuai format. Lanjutkan?`,
             async () => {
                 const reader = new FileReader();
                 reader.onload = async (event) => {
                     const text = event.target?.result as string;
                     const lines = text.split(/\r?\n/);
-                    let importedCount = 0;
+                    const importData: any[] = [];
+                    let paymentCount = 0;
                     
                     for (let i = 1; i < lines.length; i++) {
                         const line = lines[i].trim();
@@ -288,20 +288,48 @@ const SyahriyahPage = () => {
                         
                         // Support both comma and semicolon
                         const delimiter = line.includes(';') ? ';' : ',';
-                        const [name, address, parentPhone] = line.split(delimiter);
+                        const cells = line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
+                        const name = cells[0];
+                        const address = cells[1];
+                        const parentPhone = cells[2];
                         
                         if (name && name.trim()) {
-                            await addStudent({
-                                name: name.trim().replace(/^"|"$/g, ''), // Remove quotes if any
-                                address: (address?.trim() || '').replace(/^"|"$/g, ''),
-                                parentPhone: (parentPhone?.trim() || '').replace(/^"|"$/g, ''),
-                                isActive: true,
-                                branchId: viewingBranchId || '1'
+                            const payments: Record<string, number> = {};
+                            
+                            months.forEach((m, idx) => {
+                                const val = cells[3 + idx];
+                                if (val) {
+                                    const cleanVal = val.replace(/[^0-9]/g, '');
+                                    const amount = parseFloat(cleanVal) || 0;
+                                    if (amount > 0) {
+                                        payments[m] = amount;
+                                        paymentCount++;
+                                    }
+                                }
                             });
-                            importedCount++;
+
+                            importData.push({
+                                name: name.trim(),
+                                address: address || '',
+                                parentPhone: parentPhone || '',
+                                payments
+                            });
                         }
                     }
-                    showAlert("Berhasil", `Import selesai! ${importedCount} santri berhasil ditambahkan ke ${currentBranch?.name}.`, "success");
+
+                    if (importData.length === 0) {
+                        showAlert("Peringatan", "Tidak ada data santri valid untuk diimport.", "danger");
+                        return;
+                    }
+
+                    try {
+                        const branchId = viewingBranchId || currentUser?.branchId || '1';
+                        await importStudentsWithPayments(branchId, selectedYear, importData);
+                        showAlert("Berhasil", `Import selesai! ${importData.length} santri dan ${paymentCount} data pembayaran berhasil ditambahkan ke ${currentBranch?.name || 'Unit'}.`, "success");
+                    } catch (error: any) {
+                        console.error("Failed to import data", error);
+                        showAlert("Gagal", `Gagal mengimport data: ${error.message || 'Error tidak diketahui'}.`, "danger");
+                    }
                 };
                 reader.readAsText(file);
             },

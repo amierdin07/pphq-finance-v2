@@ -53,6 +53,7 @@ const defaultContextValue: AppContextType = {
   updateUser: async () => {},
   updateSettings: async () => {},
   addStudent: async () => {},
+  importStudentsWithPayments: async () => {},
   updateStudent: async () => {},
   deleteStudent: async () => {},
   deleteStudents: async () => {},
@@ -299,6 +300,21 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setStudents(prev => [...prev, newStudent]);
     }, []);
 
+    const importStudentsWithPayments = useCallback(async (
+        branchId: string,
+        year: number,
+        importData: Array<{
+            name: string;
+            address?: string;
+            parentPhone?: string;
+            payments: Record<string, number>;
+        }>
+    ) => {
+        const createdBy = currentUser?.id || null;
+        await callApi('importStudentsWithPayments', { branchId, year, importData, createdBy });
+        await refreshAllData();
+    }, [currentUser, refreshAllData]);
+
     const updateStudent = useCallback(async (student: Student) => {
         const data = await callApi('updateStudent', { student });
         const updatedStudent = { ...data.updatedStudent, isActive: !!data.updatedStudent.isActive };
@@ -465,6 +481,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
             updateUser,
             updateSettings,
             addStudent,
+            importStudentsWithPayments,
             updateStudent,
             deleteStudent,
             deleteStudents,
@@ -492,7 +509,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     }, [
         currentUser, isLoading, users, branches, categories, students, allTransactions, announcements, settings,
         confirmState, showConfirm, closeConfirm,
-        login, logout, resetData, updateUser, updateSettings, addStudent, updateStudent, deleteStudent,
+        login, logout, resetData, updateUser, updateSettings, addStudent, importStudentsWithPayments, updateStudent, deleteStudent,
         addTransaction, updateTransaction,
         deleteTransaction, addCategory, updateCategory, deleteCategory, addBranch,
         updateBranch, deleteBranch, addUser, updateUserByAdmin, deleteUser,
