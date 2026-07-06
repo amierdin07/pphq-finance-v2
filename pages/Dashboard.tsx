@@ -260,10 +260,10 @@ const Dashboard = () => {
             {/* Top Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <DashboardCard title="Saldo Aktif" value={`Rp${activeBalance.toLocaleString('id-ID')}`} icon={
-                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
-                } iconColorClass="bg-emerald-50" subtitle={`Semua periode`} />
+                } iconColorClass="bg-white/20" subtitle={`Semua periode`} isFeatured={true} />
                 <DashboardCard title="Saldo (Periode)" value={`Rp${balance.toLocaleString('id-ID')}`} icon={<BarChartIcon className="w-5 h-5 text-indigo-600"/>} iconColorClass="bg-indigo-50" subtitle={`Periode terpilih`} />
                 <DashboardCard title="Pengeluaran (Periode)" value={`Rp${totalExpense.toLocaleString('id-ID')}`} icon={<ExpenseIcon className="w-5 h-5 text-orange-600"/>} iconColorClass="bg-orange-50" subtitle={`Periode terpilih`} />
                 <DashboardCard title="Pemasukan (Periode)" value={`Rp${totalIncome.toLocaleString('id-ID')}`} icon={<IncomeIcon className="w-5 h-5 text-blue-600"/>} iconColorClass="bg-blue-50" subtitle={`Periode terpilih`} />
