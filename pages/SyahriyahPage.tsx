@@ -477,10 +477,15 @@ const SyahriyahPage = () => {
                                                             href={`https://wa.me/${student.parentPhone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`} 
                                                             target="_blank" 
                                                             rel="noopener noreferrer"
-                                                            className="text-[9px] sm:text-[10px] text-emerald-600 font-bold hover:underline block mb-1"
+                                                            className="text-[9px] sm:text-[10px] text-emerald-600 font-bold hover:underline block mb-0.5"
                                                         >
                                                             WA: {student.parentPhone}
                                                         </a>
+                                                    )}
+                                                    {student.address && (
+                                                        <p className="text-[9px] sm:text-[10px] text-slate-400 truncate mb-1">
+                                                            Alamat: {student.address}
+                                                        </p>
                                                     )}
                                                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 mt-1">
                                                         <span className={`text-[7px] sm:text-[8px] font-bold uppercase tracking-widest px-1 py-0.5 rounded-md w-fit flex-shrink-0 ${student.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
@@ -506,12 +511,6 @@ const SyahriyahPage = () => {
                                                                 </button>
                                                             )}
                                                         </div>
-
-                                                        <span className="text-slate-200 text-[8px] sm:inline hidden">|</span>
-                                                        
-                                                        <p className="text-[9px] text-slate-400 truncate italic">
-                                                            {student.address ? (student.address.length > 10 ? `${student.address.substring(0, 10)}...` : student.address) : '-'}
-                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
