@@ -436,7 +436,7 @@ const SyahriyahPage = () => {
                     <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead>
                             <tr className="bg-slate-50/50">
-                                <th className="sticky left-0 z-20 bg-slate-50/80 backdrop-blur-sm px-4 sm:px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[10px] border-b border-slate-100 w-[160px] sm:w-[380px]">
+                                <th className="sticky left-0 z-20 bg-slate-50/80 backdrop-blur-sm px-4 sm:px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[10px] border-b border-slate-100 w-[180px] sm:w-[280px] md:w-[350px]">
                                     <div className="flex items-center gap-3">
                                         <input 
                                             type="checkbox" 
@@ -446,7 +446,7 @@ const SyahriyahPage = () => {
                                         />
                                         <span>Data Santri</span>
                                     </div>
-                                </th>
+                                  </th>
 
                                 {months.map(m => (
                                     <th key={m} className="px-4 py-5 font-bold text-slate-400 uppercase tracking-widest text-[10px] border-b border-slate-100 text-center min-w-[110px]">{m}</th>
@@ -456,7 +456,7 @@ const SyahriyahPage = () => {
                         <tbody className="divide-y divide-slate-50">
                             {filteredStudents.map(student => (
                                 <tr key={student.id} className="hover:bg-slate-50/30 transition-colors group">
-                                    <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/80 backdrop-blur-sm px-4 sm:px-8 py-4 border-r border-slate-50">
+                                    <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/80 backdrop-blur-sm px-4 sm:px-8 py-4 border-r border-slate-50 w-[180px] sm:w-[280px] md:w-[350px] max-w-[180px] sm:max-w-[280px] md:max-w-[350px]">
                                         <div className="flex items-center gap-4">
                                             <input 
                                                 type="checkbox" 
