@@ -146,6 +146,21 @@ const Dashboard = () => {
         return branches.find(b => b.id === currentUser.branchId)?.name || '';
     }, [currentUser, branches]);
 
+    const activeBalance = useMemo(() => {
+        let income = 0;
+        let expense = 0;
+        rawData.forEach(t => {
+            if (t.nature === 'Money') {
+                if (t.type === TransactionType.Income) {
+                    income += t.amount;
+                } else if (t.type === TransactionType.Expense) {
+                    expense += t.amount;
+                }
+            }
+        });
+        return income - expense;
+    }, [rawData]);
+
     const { totalIncome, totalExpense, balance } = useMemo(() => {
         let totalIncome = 0;
         let totalExpense = 0;
@@ -210,8 +225,13 @@ const Dashboard = () => {
             />
             
             {/* Top Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <DashboardCard title="Total Saldo" value={`Rp${balance.toLocaleString('id-ID')}`} icon={<BarChartIcon className="w-5 h-5 text-emerald-600"/>} iconColorClass="bg-emerald-50" subtitle={`Saldo saat ini`} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <DashboardCard title="Saldo Aktif" value={`Rp${activeBalance.toLocaleString('id-ID')}`} icon={
+                    <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                } iconColorClass="bg-teal-50" subtitle={`Semua periode`} />
+                <DashboardCard title="Saldo Periode" value={`Rp${balance.toLocaleString('id-ID')}`} icon={<BarChartIcon className="w-5 h-5 text-emerald-600"/>} iconColorClass="bg-emerald-50" subtitle={`Periode terpilih`} />
                 <DashboardCard title="Total Pengeluaran" value={`Rp${totalExpense.toLocaleString('id-ID')}`} icon={<ExpenseIcon className="w-5 h-5 text-orange-600"/>} iconColorClass="bg-orange-50" subtitle={`Periode terpilih`} />
                 <DashboardCard title="Total Pemasukan" value={`Rp${totalIncome.toLocaleString('id-ID')}`} icon={<IncomeIcon className="w-5 h-5 text-blue-600"/>} iconColorClass="bg-blue-50" subtitle={`Periode terpilih`} />
             </div>
