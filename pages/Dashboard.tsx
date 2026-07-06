@@ -161,6 +161,39 @@ const Dashboard = () => {
         return income - expense;
     }, [rawData]);
 
+    const monthlySummary = useMemo(() => {
+        const summary: { [key: string]: { income: number, expense: number } } = {};
+        const monthMap: { [key: string]: number } = {
+            'Januari': 0, 'Februari': 1, 'Maret': 2, 'April': 3, 'Mei': 4, 'Juni': 5,
+            'Juli': 6, 'Agustus': 7, 'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11
+        };
+
+        rawData
+            .filter(t => t.nature === TransactionNature.Money)
+            .forEach(t => {
+                const date = new Date(t.date);
+                const monthYear = date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+                if (!summary[monthYear]) {
+                    summary[monthYear] = { income: 0, expense: 0 };
+                }
+                if (t.type === TransactionType.Income) {
+                    summary[monthYear].income += t.amount;
+                } else if (t.type === TransactionType.Expense) {
+                    summary[monthYear].expense += t.amount;
+                }
+            });
+
+        return Object.entries(summary)
+            .sort(([a], [b]) => {
+                const [monthA, yearA] = a.split(' ');
+                const [monthB, yearB] = b.split(' ');
+                const dateA = new Date(Number(yearA), monthMap[monthA] ?? 0);
+                const dateB = new Date(Number(yearB), monthMap[monthB] ?? 0);
+                return dateB.getTime() - dateA.getTime();
+            })
+            .slice(0, 6); // Limit to last 6 months
+    }, [rawData]);
+
     const { totalIncome, totalExpense, balance } = useMemo(() => {
         let totalIncome = 0;
         let totalExpense = 0;
@@ -227,13 +260,13 @@ const Dashboard = () => {
             {/* Top Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <DashboardCard title="Saldo Aktif" value={`Rp${activeBalance.toLocaleString('id-ID')}`} icon={
-                    <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
-                } iconColorClass="bg-teal-50" subtitle={`Semua periode`} />
-                <DashboardCard title="Saldo Periode" value={`Rp${balance.toLocaleString('id-ID')}`} icon={<BarChartIcon className="w-5 h-5 text-emerald-600"/>} iconColorClass="bg-emerald-50" subtitle={`Periode terpilih`} />
-                <DashboardCard title="Total Pengeluaran" value={`Rp${totalExpense.toLocaleString('id-ID')}`} icon={<ExpenseIcon className="w-5 h-5 text-orange-600"/>} iconColorClass="bg-orange-50" subtitle={`Periode terpilih`} />
-                <DashboardCard title="Total Pemasukan" value={`Rp${totalIncome.toLocaleString('id-ID')}`} icon={<IncomeIcon className="w-5 h-5 text-blue-600"/>} iconColorClass="bg-blue-50" subtitle={`Periode terpilih`} />
+                } iconColorClass="bg-emerald-50" subtitle={`Semua periode`} />
+                <DashboardCard title="Saldo (Periode)" value={`Rp${balance.toLocaleString('id-ID')}`} icon={<BarChartIcon className="w-5 h-5 text-indigo-600"/>} iconColorClass="bg-indigo-50" subtitle={`Periode terpilih`} />
+                <DashboardCard title="Pengeluaran (Periode)" value={`Rp${totalExpense.toLocaleString('id-ID')}`} icon={<ExpenseIcon className="w-5 h-5 text-orange-600"/>} iconColorClass="bg-orange-50" subtitle={`Periode terpilih`} />
+                <DashboardCard title="Pemasukan (Periode)" value={`Rp${totalIncome.toLocaleString('id-ID')}`} icon={<IncomeIcon className="w-5 h-5 text-blue-600"/>} iconColorClass="bg-blue-50" subtitle={`Periode terpilih`} />
             </div>
 
             {/* Admin & SubAdmin Leaderboard & Monitoring Section */}
@@ -289,6 +322,48 @@ const Dashboard = () => {
                 <div className="lg:col-span-2 h-full">
                      <RecentTransactions transactions={filteredData} branches={branches} />
                 </div>
+            </div>
+
+            {/* Ringkasan Bulanan Table */}
+            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                 <div className="flex justify-between items-center mb-6">
+                     <div>
+                         <h2 className="text-xl font-bold text-slate-800">Ringkasan Bulanan</h2>
+                         <p className="text-slate-400 text-xs font-medium">Rekapitulasi total uang masuk dan keluar setiap bulan (6 bulan terakhir)</p>
+                     </div>
+                 </div>
+                 <div className="overflow-x-auto">
+                     <table className="w-full text-sm text-left">
+                         <thead>
+                             <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                 <th className="pb-3 text-slate-400">Bulan</th>
+                                 <th className="pb-3 text-right text-emerald-500">Total Pemasukan</th>
+                                 <th className="pb-3 text-right text-orange-500">Total Pengeluaran</th>
+                                 <th className="pb-3 text-right text-slate-400">Selisih (Net)</th>
+                             </tr>
+                         </thead>
+                         <tbody className="divide-y divide-slate-50">
+                             {monthlySummary.map(([monthYear, data]) => {
+                                 const diff = data.income - data.expense;
+                                 return (
+                                     <tr key={monthYear} className="text-slate-700 text-sm hover:bg-slate-50/50 transition-colors">
+                                         <td className="py-4 text-slate-800 font-bold">{monthYear}</td>
+                                         <td className="py-4 text-right text-emerald-600 font-semibold">Rp{data.income.toLocaleString('id-ID')}</td>
+                                         <td className="py-4 text-right text-orange-600 font-semibold">Rp{data.expense.toLocaleString('id-ID')}</td>
+                                         <td className={`py-4 text-right font-bold ${diff >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>
+                                             Rp{diff.toLocaleString('id-ID')}
+                                         </td>
+                                     </tr>
+                                 );
+                             })}
+                             {monthlySummary.length === 0 && (
+                                 <tr>
+                                     <td colSpan={4} className="text-center py-10 text-slate-400 text-sm">Belum ada data bulanan.</td>
+                                 </tr>
+                             )}
+                         </tbody>
+                     </table>
+                 </div>
             </div>
         </div>
     );
