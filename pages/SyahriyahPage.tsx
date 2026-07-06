@@ -482,34 +482,37 @@ const SyahriyahPage = () => {
                                                             WA: {student.parentPhone}
                                                         </a>
                                                     )}
-                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 mt-1">
                                                         <span className={`text-[7px] sm:text-[8px] font-bold uppercase tracking-widest px-1 py-0.5 rounded-md w-fit flex-shrink-0 ${student.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
                                                             {student.isActive ? 'Aktif' : 'Off'}
                                                         </span>
+                                                        
+                                                        {currentUser?.role === Role.BranchUser && (
+                                                            <button 
+                                                                onClick={() => handleOpenPayment(student, new Date().getMonth(), true)}
+                                                                className="px-1.5 py-0.5 bg-emerald-500 text-white font-bold text-[7px] sm:text-[8px] uppercase tracking-wider rounded hover:bg-emerald-600 transition-all active:scale-95 flex-shrink-0"
+                                                            >
+                                                                Bayar
+                                                            </button>
+                                                        )}
+
+                                                        <div className="flex items-center gap-0.5">
+                                                            <button onClick={() => { setEditingStudent(student); setStudentForm({ name: student.name, address: student.address || '', parentPhone: student.parentPhone || '', isActive: student.isActive }); setIsAddStudentModalOpen(true); }} className="p-0.5 text-slate-300 hover:text-slate-600 transition-colors">
+                                                                <PencilIcon className="w-2.5 h-2.5 sm:w-3 h-3" />
+                                                            </button>
+                                                            {currentUser?.role === Role.BranchUser && (
+                                                                <button onClick={() => handleDeleteStudent(student)} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors">
+                                                                    <TrashIcon className="w-2.5 h-2.5 sm:w-3 h-3" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+
+                                                        <span className="text-slate-200 text-[8px] sm:inline hidden">|</span>
+                                                        
                                                         <p className="text-[9px] text-slate-400 truncate italic">
                                                             {student.address ? (student.address.length > 10 ? `${student.address.substring(0, 10)}...` : student.address) : '-'}
                                                         </p>
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 flex-shrink-0 ml-auto sm:ml-0">
-                                                {currentUser?.role === Role.BranchUser && (
-                                                    <button 
-                                                        onClick={() => handleOpenPayment(student, new Date().getMonth(), true)}
-                                                        className="px-3 sm:px-4 py-1.5 sm:py-2.5 bg-emerald-500 text-white font-bold text-[8px] sm:text-[10px] uppercase tracking-widest rounded-lg sm:rounded-xl hover:bg-emerald-600 transition-all active:scale-95 shadow-md shadow-emerald-500/10 w-full sm:w-auto"
-                                                    >
-                                                        Bayar
-                                                    </button>
-                                                )}
-                                                <div className="flex items-center gap-0.5 sm:gap-1">
-                                                    <button onClick={() => { setEditingStudent(student); setStudentForm({ name: student.name, address: student.address || '', parentPhone: student.parentPhone || '', isActive: student.isActive }); setIsAddStudentModalOpen(true); }} className="p-1 sm:p-2 text-slate-300 hover:text-slate-600 transition-colors">
-                                                        <PencilIcon className="w-3 h-3 sm:w-4 h-4" />
-                                                    </button>
-                                                    {currentUser?.role === Role.BranchUser && (
-                                                        <button onClick={() => handleDeleteStudent(student)} className="p-1 sm:p-2 text-slate-300 hover:text-red-500 transition-colors">
-                                                            <TrashIcon className="w-3 h-3 sm:w-4 h-4" />
-                                                        </button>
-                                                    )}
                                                 </div>
                                             </div>
                                         </div>
