@@ -17,6 +17,11 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
 
+    const MONTH_NAMES = useMemo(() => [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ], []);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
     const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
@@ -24,6 +29,11 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [selectedImageUrl, setSelectedImageUrl] = useState('');
     
+    const [filterMonth, setFilterMonth] = useState<string>('all');
+    const [filterYear, setFilterYear] = useState<string>('all');
+    const [sortBy, setSortBy] = useState<'date' | 'category' | 'amount'>('date');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
     const [formState, setFormState] = useState({
         date: new Date().toISOString().split('T')[0],
         category: '',
@@ -34,23 +44,70 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
     
     useEffect(() => {
         closeModal();
+        setFilterMonth('all');
+        setFilterYear('all');
+        setSortBy('date');
+        setSortOrder('desc');
     }, [location.pathname, location.search]);
 
     const pageTitle = type === TransactionType.Income ? 'Pemasukan Uang' : 'Pengeluaran';
     const availableCategories = useMemo(() => categories.filter(c => c.type === type), [categories, type]);
 
-    const filteredTransactions = useMemo(() => {
-        return transactions
+    const uniqueYears = useMemo(() => {
+        const years = transactions
             .filter(t => t.type === type && t.nature === nature)
-            .filter(t => {
-                if (globalSearchTerm) {
-                    const s = globalSearchTerm.toLowerCase();
-                    return t.description.toLowerCase().includes(s) || t.category.toLowerCase().includes(s);
-                }
-                return true;
-            })
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [transactions, type, nature, globalSearchTerm]);
+            .map(t => new Date(t.date).getFullYear());
+        const unique = Array.from(new Set(years)).sort((a, b) => b - a);
+        return unique.length > 0 ? unique : [new Date().getFullYear()];
+    }, [transactions, type, nature]);
+
+    const handleSort = (field: 'date' | 'category' | 'amount') => {
+        if (sortBy === field) {
+            setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(field);
+            setSortOrder('desc');
+        }
+    };
+
+    const filteredTransactions = useMemo(() => {
+        let result = transactions.filter(t => t.type === type && t.nature === nature);
+
+        // Filter by Month
+        if (filterMonth !== 'all') {
+            result = result.filter(t => new Date(t.date).getMonth() === parseInt(filterMonth, 10));
+        }
+
+        // Filter by Year
+        if (filterYear !== 'all') {
+            result = result.filter(t => new Date(t.date).getFullYear() === parseInt(filterYear, 10));
+        }
+
+        // Search Term Filter
+        if (globalSearchTerm) {
+            const s = globalSearchTerm.toLowerCase();
+            result = result.filter(t => 
+                t.description.toLowerCase().includes(s) || 
+                t.category.toLowerCase().includes(s)
+            );
+        }
+
+        // Sorting
+        result.sort((a, b) => {
+            let comparison = 0;
+            if (sortBy === 'date') {
+                comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+            } else if (sortBy === 'category') {
+                comparison = a.category.localeCompare(b.category);
+            } else if (sortBy === 'amount') {
+                comparison = a.amount - b.amount;
+            }
+
+            return sortOrder === 'asc' ? comparison : -comparison;
+        });
+
+        return result;
+    }, [transactions, type, nature, globalSearchTerm, filterMonth, filterYear, sortBy, sortOrder]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -161,16 +218,70 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                 </button>
             </div>
             
+            {/* Filter Bar */}
+            <div className="flex flex-wrap gap-4 items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Filter Bulan:</span>
+                    <select 
+                        value={filterMonth} 
+                        onChange={e => setFilterMonth(e.target.value)} 
+                        className="px-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+                    >
+                        <option value="all">Semua Bulan</option>
+                        {MONTH_NAMES.map((name, index) => (
+                            <option key={index} value={index}>{name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Tahun:</span>
+                    <select 
+                        value={filterYear} 
+                        onChange={e => setFilterYear(e.target.value)} 
+                        className="px-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+                    >
+                        <option value="all">Semua Tahun</option>
+                        {uniqueYears.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            
              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                          <thead className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-50/50">
                             <tr>
-                                <th className="px-6 py-4 font-bold">Tanggal</th>
-                                <th className="px-6 py-4 font-bold">Kategori</th>
+                                <th 
+                                    className="px-6 py-4 font-bold cursor-pointer hover:bg-slate-100/50 select-none transition-colors"
+                                    onClick={() => handleSort('date')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Tanggal
+                                        {sortBy === 'date' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-6 py-4 font-bold cursor-pointer hover:bg-slate-100/50 select-none transition-colors"
+                                    onClick={() => handleSort('category')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Kategori
+                                        {sortBy === 'category' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                                    </div>
+                                </th>
                                 <th className="px-6 py-4 font-bold">Deskripsi</th>
                                 <th className="px-6 py-4 font-bold">Nota</th>
-                                <th className="px-6 py-4 font-bold text-right">Jumlah</th>
+                                <th 
+                                    className="px-6 py-4 font-bold cursor-pointer hover:bg-slate-100/50 select-none transition-colors text-right"
+                                    onClick={() => handleSort('amount')}
+                                >
+                                    <div className="flex items-center justify-end gap-1">
+                                        Jumlah
+                                        {sortBy === 'amount' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                                    </div>
+                                </th>
                                 <th className="px-6 py-4 font-bold text-center">Aksi</th>
                             </tr>
                         </thead>
