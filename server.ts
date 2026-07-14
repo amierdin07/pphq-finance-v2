@@ -9,99 +9,117 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize SQLite Database
-const db = new Database("database.sqlite");
+// Initialize SQLite Databases
+const dbPphq = new Database("database.sqlite");
+const dbPjc = new Database("database_pjc.sqlite");
 
-// Auto-migration for SQLite
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE,
-    password TEXT,
-    name TEXT,
-    role TEXT,
-    branchId TEXT,
-    isActive INTEGER DEFAULT 1,
-    avatarUrl TEXT,
-    unitHeadName TEXT,
-    unitTreasurerName TEXT
-  );
+const runMigration = (db: any, isPjc: boolean) => {
+  // Auto-migration for SQLite
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE,
+      password TEXT,
+      name TEXT,
+      role TEXT,
+      branchId TEXT,
+      isActive INTEGER DEFAULT 1,
+      avatarUrl TEXT,
+      unitHeadName TEXT,
+      unitTreasurerName TEXT
+    );
 
-  CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  );
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
 
-  -- Insert default settings
-  INSERT OR IGNORE INTO settings (key, value) VALUES ('appLogoUrl', '');
-  INSERT OR IGNORE INTO settings (key, value) VALUES ('appName', 'PPHQ Finance');
-  INSERT OR IGNORE INTO settings (key, value) VALUES ('appSubtitle', 'Sistem Keuangan PPHQ');
+    -- Insert default settings
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('appLogoUrl', '');
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('appName', 'PPHQ Finance');
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('appSubtitle', 'Sistem Keuangan PPHQ');
 
-  CREATE TABLE IF NOT EXISTS transactions (
-    id TEXT PRIMARY KEY,
-    date TEXT,
-    description TEXT,
-    amount REAL,
-    category TEXT,
-    type TEXT,
-    nature TEXT,
-    branchId TEXT,
-    createdBy TEXT,
-    item TEXT,
-    attachmentUrl TEXT,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+    CREATE TABLE IF NOT EXISTS transactions (
+      id TEXT PRIMARY KEY,
+      date TEXT,
+      description TEXT,
+      amount REAL,
+      category TEXT,
+      type TEXT,
+      nature TEXT,
+      branchId TEXT,
+      createdBy TEXT,
+      item TEXT,
+      attachmentUrl TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 
-  CREATE TABLE IF NOT EXISTS branches (
-    id TEXT PRIMARY KEY,
-    name TEXT,
-    location TEXT,
-    isPrivate INTEGER DEFAULT 0
-  );
+    CREATE TABLE IF NOT EXISTS branches (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      location TEXT,
+      isPrivate INTEGER DEFAULT 0
+    );
 
-  CREATE TABLE IF NOT EXISTS categories (
-    id TEXT PRIMARY KEY,
-    name TEXT,
-    type TEXT
-  );
+    CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      type TEXT
+    );
 
-  CREATE TABLE IF NOT EXISTS announcements (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    message TEXT NOT NULL,
-    createdBy TEXT,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+    CREATE TABLE IF NOT EXISTS announcements (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      createdBy TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 
-  CREATE TABLE IF NOT EXISTS announcement_reads (
-    announcementId TEXT,
-    userId TEXT,
-    readAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (announcementId, userId)
-  );
+    CREATE TABLE IF NOT EXISTS announcement_reads (
+      announcementId TEXT,
+      userId TEXT,
+      readAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (announcementId, userId)
+    );
 
-  CREATE TABLE IF NOT EXISTS students (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    address TEXT,
-    parentPhone TEXT,
-    isActive INTEGER DEFAULT 1,
-    branchId TEXT
-  );
+    CREATE TABLE IF NOT EXISTS students (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      address TEXT,
+      parentPhone TEXT,
+      isActive INTEGER DEFAULT 1,
+      branchId TEXT
+    );
+  `);
 
-  -- Insert default admin if no users exist
-  INSERT OR IGNORE INTO users (id, email, password, name, role, isActive) 
-  VALUES ('admin-1', 'admin@pphq.org', 'admin123', 'Super Admin', 'Admin', 1);
-`);
+  if (isPjc) {
+    // Insert default admin for PJC
+    db.prepare(`
+      INSERT OR IGNORE INTO users (id, email, password, name, role, isActive) 
+      VALUES ('admin-pjc', 'admin@pjc.com', 'admin123', 'Super Admin PJC', 'Admin', 1)
+    `).run();
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('appName', 'PJC Finance')").run();
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('appSubtitle', 'Sistem Keuangan PJC')").run();
+  } else {
+    // Insert default admin for PPHQ if no users exist
+    db.prepare(`
+      INSERT OR IGNORE INTO users (id, email, password, name, role, isActive) 
+      VALUES ('admin-1', 'admin@pphq.org', 'admin123', 'Super Admin', 'Admin', 1)
+    `).run();
+  }
 
-// Migration: Ensure columns exist for existing database
-try { db.exec("ALTER TABLE users ADD COLUMN password TEXT"); } catch (e) {}
-try { db.exec("ALTER TABLE users ADD COLUMN avatarUrl TEXT"); } catch (e) {}
-try { db.exec("ALTER TABLE users ADD COLUMN unitHeadName TEXT"); } catch (e) {}
-try { db.exec("ALTER TABLE users ADD COLUMN unitTreasurerName TEXT"); } catch (e) {}
-try { db.exec("ALTER TABLE transactions ADD COLUMN item TEXT"); } catch (e) {}
-try { db.exec("ALTER TABLE transactions ADD COLUMN attachmentUrl TEXT"); } catch (e) {}
-try { db.exec("ALTER TABLE branches ADD COLUMN isPrivate INTEGER DEFAULT 0"); } catch (e) {}
+  // Migration: Ensure columns exist for existing database
+  try { db.exec("ALTER TABLE users ADD COLUMN password TEXT"); } catch (e) {}
+  try { db.exec("ALTER TABLE users ADD COLUMN avatarUrl TEXT"); } catch (e) {}
+  try { db.exec("ALTER TABLE users ADD COLUMN unitHeadName TEXT"); } catch (e) {}
+  try { db.exec("ALTER TABLE users ADD COLUMN unitTreasurerName TEXT"); } catch (e) {}
+  try { db.exec("ALTER TABLE transactions ADD COLUMN item TEXT"); } catch (e) {}
+  try { db.exec("ALTER TABLE transactions ADD COLUMN attachmentUrl TEXT"); } catch (e) {}
+  try { db.exec("ALTER TABLE branches ADD COLUMN isPrivate INTEGER DEFAULT 0"); } catch (e) {}
+};
+
+runMigration(dbPphq, false);
+runMigration(dbPjc, true);
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -139,6 +157,24 @@ async function startServer() {
   // API Route - Handling actions from AppContext
   app.post("/api/action", (req, res) => {
     const { action, payload } = req.body;
+    
+    // Select database dynamically based on headers or payload domain
+    let db = dbPphq;
+    const tenantHeader = req.headers["x-tenant-domain"];
+    const host = req.headers.host || "";
+    const referer = req.headers.referer || "";
+    
+    if (action === "login") {
+      const email = payload?.email || "";
+      if (typeof email === "string" && email.toLowerCase().endsWith("@pjc.com")) {
+        db = dbPjc;
+      }
+    } else if (tenantHeader === "pjc.com" || 
+               (typeof tenantHeader === "string" && tenantHeader.toLowerCase().endsWith("pjc.com")) ||
+               host.toLowerCase().includes("pjc.com") ||
+               referer.toLowerCase().includes("pjc.com")) {
+      db = dbPjc;
+    }
     
     try {
       // 1. System Actions

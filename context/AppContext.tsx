@@ -5,9 +5,33 @@ const API_URL = '/api/action';
 
 const callApi = async (action: string, payload?: any) => {
     try {
+        let tenantDomain = '';
+        if (typeof window !== 'undefined' && window.location) {
+            const hostname = window.location.hostname;
+            if (hostname.includes('pjc.com')) {
+                tenantDomain = 'pjc.com';
+            }
+        }
+        try {
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                if (parsed && parsed.email) {
+                    tenantDomain = parsed.email.split('@')[1] || tenantDomain;
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing currentUser for tenant", e);
+        }
+
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (tenantDomain) {
+            headers['x-tenant-domain'] = tenantDomain;
+        }
+
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ action, payload }),
         });
 
