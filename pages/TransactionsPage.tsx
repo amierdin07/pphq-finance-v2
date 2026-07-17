@@ -1,10 +1,13 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
-import { Transaction, TransactionType, TransactionNature, Category } from '../types';
-import { PencilIcon, TrashIcon, CameraIcon, ImageIcon } from '../constants';
+import { Transaction, TransactionType, TransactionNature, Category, Role } from '../types';
+import { PencilIcon, TrashIcon, CameraIcon, ImageIcon, IncomeIcon, ExpenseIcon } from '../constants';
 import { formatCurrencyInput, parseCurrencyInput } from '../utils';
 import { compressImage } from '../utils/imageUtils';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import ExportModal from '../components/ExportModal';
 
 interface TransactionsPageProps {
     type: TransactionType;
@@ -12,7 +15,7 @@ interface TransactionsPageProps {
 }
 
 const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = TransactionNature.Money }) => {
-    const { transactions, categories, addTransaction, updateTransaction, deleteTransaction, currentUser, globalSearchTerm, showConfirm, showAlert } = useAppContext();
+    const { transactions, categories, addTransaction, updateTransaction, deleteTransaction, currentUser, globalSearchTerm, showConfirm, showAlert, branches } = useAppContext();
     const location = useLocation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -34,6 +37,11 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
     const [sortBy, setSortBy] = useState<'date' | 'category' | 'amount'>('date');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+    const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [exportMode, setExportMode] = useState<'detailed' | 'summary'>('detailed');
+
+
     const [formState, setFormState] = useState({
         date: new Date().toISOString().split('T')[0],
         category: '',
@@ -48,7 +56,12 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
         setFilterYear('all');
         setSortBy('date');
         setSortOrder('desc');
+        setSelectedCategoryFilter(null);
     }, [location.pathname, location.search]);
+
+    useEffect(() => {
+        setSelectedCategoryFilter(null);
+    }, [filterMonth, filterYear]);
 
     const pageTitle = type === TransactionType.Income ? 'Pemasukan Uang' : 'Pengeluaran';
     const availableCategories = useMemo(() => categories.filter(c => c.type === type), [categories, type]);
@@ -108,6 +121,25 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
 
         return result;
     }, [transactions, type, nature, globalSearchTerm, filterMonth, filterYear, sortBy, sortOrder]);
+
+    const totalAmount = useMemo(() => {
+        return filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+    }, [filteredTransactions]);
+
+    const categoryData = useMemo(() => {
+        const summary: { [key: string]: number } = {};
+        filteredTransactions.forEach(t => {
+            summary[t.category] = (summary[t.category] || 0) + t.amount;
+        });
+        return Object.entries(summary)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+    }, [filteredTransactions]);
+
+    const displayTransactions = useMemo(() => {
+        if (!selectedCategoryFilter) return filteredTransactions;
+        return filteredTransactions.filter(t => t.category === selectedCategoryFilter);
+    }, [filteredTransactions, selectedCategoryFilter]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -218,37 +250,192 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                 </button>
             </div>
             
-            {/* Filter Bar */}
-            <div className="flex flex-wrap gap-4 items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Filter Bulan:</span>
-                    <select 
-                        value={filterMonth} 
-                        onChange={e => setFilterMonth(e.target.value)} 
-                        className="px-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
-                    >
-                        <option value="all">Semua Bulan</option>
-                        {MONTH_NAMES.map((name, index) => (
-                            <option key={index} value={index}>{name}</option>
-                        ))}
-                    </select>
+            {/* Filter Bar & Export */}
+            <div className="flex flex-wrap gap-4 items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm justify-between">
+                <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Filter Bulan:</span>
+                        <select 
+                            value={filterMonth} 
+                            onChange={e => setFilterMonth(e.target.value)} 
+                            className="px-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+                        >
+                            <option value="all">Semua Bulan</option>
+                            {MONTH_NAMES.map((name, index) => (
+                                <option key={index} value={index}>{name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Tahun:</span>
+                        <select 
+                            value={filterYear} 
+                            onChange={e => setFilterYear(e.target.value)} 
+                            className="px-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+                        >
+                            <option value="all">Semua Tahun</option>
+                            {uniqueYears.map(year => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Tahun:</span>
-                    <select 
-                        value={filterYear} 
-                        onChange={e => setFilterYear(e.target.value)} 
-                        className="px-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
-                    >
-                        <option value="all">Semua Tahun</option>
-                        {uniqueYears.map(year => (
-                            <option key={year} value={year}>{year}</option>
-                        ))}
-                    </select>
-                </div>
+
+                <button 
+                    onClick={() => {
+                        setExportMode('detailed');
+                        setIsExportModalOpen(true);
+                    }}
+                    className="px-5 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2"
+                >
+                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Unduh E-Statement
+                </button>
+            </div>
+
+            {/* Total and Category Pie Chart Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Total Transaction Card */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between"
+                >
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                Total {type === TransactionType.Income ? 'Pemasukan' : 'Pengeluaran'} ({filterMonth === 'all' ? 'Semua Bulan' : MONTH_NAMES[parseInt(filterMonth)]} {filterYear === 'all' ? '' : filterYear})
+                            </span>
+                            <div className={`p-3 rounded-2xl ${type === TransactionType.Income ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500'}`}>
+                                {type === TransactionType.Income ? <IncomeIcon className="w-6 h-6" /> : <ExpenseIcon className="w-6 h-6" />}
+                            </div>
+                        </div>
+                        <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+                            Rp{totalAmount.toLocaleString('id-ID')}
+                        </h2>
+                        <p className="text-slate-400 text-xs font-medium mt-2">
+                            Terdiri dari <span className="font-bold text-slate-700">{filteredTransactions.length}</span> transaksi yang tercatat.
+                        </p>
+                    </div>
+                    {selectedCategoryFilter && (
+                        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-slate-500">Kategori Terpilih:</span>
+                                <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ${type === TransactionType.Income ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                    {selectedCategoryFilter}
+                                </span>
+                            </div>
+                            <button 
+                                onClick={() => setSelectedCategoryFilter(null)}
+                                className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                Lihat Semua
+                            </button>
+                        </div>
+                    )}
+                </motion.div>
+
+                {/* Category Pie Chart Card */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                    className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[220px]"
+                >
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                        Proporsi Kategori {type === TransactionType.Income ? 'Pemasukan' : 'Pengeluaran'}
+                    </h3>
+                    {categoryData.length > 0 ? (
+                        <div className="flex-grow flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="w-full sm:w-1/2 h-[150px] relative">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={categoryData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={40}
+                                            outerRadius={55}
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                        >
+                                            {categoryData.map((entry, index) => {
+                                                const COLORS = type === TransactionType.Income 
+                                                    ? ['#10B981', '#34D399', '#059669', '#6EE7B7', '#047857']
+                                                    : ['#EF4444', '#F59E0B', '#6366F1', '#06B6D4', '#8B5CF6', '#EC4899', '#64748B'];
+                                                const isSelected = selectedCategoryFilter === entry.name;
+                                                return (
+                                                    <Cell 
+                                                        key={`cell-${index}`} 
+                                                        fill={COLORS[index % COLORS.length]} 
+                                                        onClick={() => {
+                                                            if (selectedCategoryFilter === entry.name) {
+                                                                setSelectedCategoryFilter(null);
+                                                            } else {
+                                                                setSelectedCategoryFilter(entry.name);
+                                                            }
+                                                        }}
+                                                        stroke={isSelected ? '#1e293b' : 'none'}
+                                                        strokeWidth={isSelected ? 2 : 0}
+                                                        opacity={selectedCategoryFilter && !isSelected ? 0.35 : 1}
+                                                        className="transition-all duration-300 focus:outline-none cursor-pointer"
+                                                    />
+                                                );
+                                            })}
+                                        </Pie>
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: '#fff', border: '1px solid #f1f5f9', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                            formatter={(value: number) => `Rp${value.toLocaleString('id-ID')}`}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="w-full sm:w-1/2 max-h-[140px] overflow-y-auto space-y-2 text-xs font-semibold text-slate-600 custom-scrollbar pr-1">
+                                {categoryData.map((entry, index) => {
+                                    const COLORS = type === TransactionType.Income 
+                                        ? ['#10B981', '#34D399', '#059669', '#6EE7B7', '#047857']
+                                        : ['#EF4444', '#F59E0B', '#6366F1', '#06B6D4', '#8B5CF6', '#EC4899', '#64748B'];
+                                    const isSelected = selectedCategoryFilter === entry.name;
+                                    return (
+                                        <button 
+                                            key={entry.name}
+                                            onClick={() => {
+                                                if (selectedCategoryFilter === entry.name) {
+                                                    setSelectedCategoryFilter(null);
+                                                } else {
+                                                    setSelectedCategoryFilter(entry.name);
+                                                }
+                                            }}
+                                            className={`flex items-center justify-between w-full p-1.5 rounded-lg transition-all ${
+                                                isSelected ? 'bg-slate-50 border border-slate-100' : 'hover:bg-slate-50/50 border border-transparent'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                                                <span className={`truncate max-w-[90px] text-left ${isSelected ? 'font-bold text-slate-800' : 'text-slate-500'}`}>{entry.name}</span>
+                                            </div>
+                                            <span className={isSelected ? 'font-bold text-slate-800' : 'text-slate-400'}>
+                                                {((entry.value / totalAmount) * 100).toFixed(0)}%
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex-grow flex flex-col items-center justify-center text-slate-400 py-6">
+                            <svg className="w-12 h-12 text-slate-200 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                            </svg>
+                            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Tidak ada data untuk bulan ini</span>
+                        </div>
+                    )}
+                </motion.div>
             </div>
             
-             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                          <thead className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-50/50">
@@ -286,7 +473,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {filteredTransactions.map(t => (
+                            {displayTransactions.map(t => (
                                 <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="px-6 py-4 text-slate-500 font-medium">{new Date(t.date).toLocaleDateString('id-ID')}</td>
                                     <td className="px-6 py-4 text-slate-500 font-medium">{t.category}</td>
@@ -351,7 +538,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                                     </select>
                                 </div>
                             </div>
-                            <div>
+                             <div>
                                 <label htmlFor="description" className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Deskripsi</label>
                                 <input id="description" name="description" type="text" placeholder="Misal: Pembayaran listrik" value={formState.description} onChange={handleInputChange} className="mt-2 w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-700" required />
                             </div>
@@ -432,6 +619,17 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                     </div>
                 </div>
             )}
+
+            {/* E-Statement Export Modal */}
+            <ExportModal 
+                isOpen={isExportModalOpen} 
+                onClose={() => setIsExportModalOpen(false)} 
+                transactions={transactions.filter(t => t.type === type)}
+                branches={branches}
+                title={`Unduh E-Statement ${pageTitle}`}
+                branchName={currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin ? 'semua unit' : branches.find(b => b.id === currentUser?.branchId)?.name}
+                mode={exportMode}
+            />
         </div>
     );
 };

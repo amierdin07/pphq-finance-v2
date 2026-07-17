@@ -454,7 +454,7 @@ const SyahriyahPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {filteredStudents.map(student => (
+                            {filteredStudents.map((student, index) => (
                                 <tr key={student.id} className="hover:bg-slate-50/30 transition-colors group">
                                     <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/80 backdrop-blur-sm px-4 sm:px-8 py-4 border-r border-slate-50 w-[180px] sm:w-[280px] md:w-[350px] max-w-[180px] sm:max-w-[280px] md:max-w-[350px]">
                                         <div className="flex items-center gap-4">
@@ -471,7 +471,7 @@ const SyahriyahPage = () => {
                                                 </div>
 
                                                 <div className="overflow-hidden flex-1">
-                                                    <p className={`font-bold truncate text-[11px] sm:text-sm leading-tight mb-0.5 ${student.isActive ? 'text-slate-700' : 'text-red-600'}`}>{student.name}</p>
+                                                    <p className={`font-bold truncate text-[11px] sm:text-sm leading-tight mb-0.5 ${student.isActive ? 'text-slate-700' : 'text-red-600'}`}>{index + 1}. {student.name}</p>
                                                     {student.parentPhone && (
                                                         <a 
                                                             href={`https://wa.me/${student.parentPhone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`} 
