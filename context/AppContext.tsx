@@ -3,25 +3,27 @@ import { AppContextType, User, Branch, Category, Transaction, Announcement, Role
 
 const API_URL = '/api/action';
 
-const callApi = async (action: string, payload?: any) => {
+const callApiBase = async (action: string, payload?: any, tenantDomainOverride?: string) => {
     try {
-        let tenantDomain = '';
-        if (typeof window !== 'undefined' && window.location) {
+        let tenantDomain = tenantDomainOverride || '';
+        if (!tenantDomain && typeof window !== 'undefined' && window.location) {
             const hostname = window.location.hostname;
             if (hostname.includes('pjc.com')) {
                 tenantDomain = 'pjc.com';
             }
         }
-        try {
-            const storedUser = localStorage.getItem('currentUser');
-            if (storedUser) {
-                const parsed = JSON.parse(storedUser);
-                if (parsed && parsed.email) {
-                    tenantDomain = parsed.email.split('@')[1] || tenantDomain;
+        if (!tenantDomain) {
+            try {
+                const storedUser = localStorage.getItem('currentUser');
+                if (storedUser) {
+                    const parsed = JSON.parse(storedUser);
+                    if (parsed && parsed.email) {
+                        tenantDomain = parsed.email.split('@')[1] || tenantDomain;
+                    }
                 }
+            } catch (e) {
+                console.error("Error parsing currentUser for tenant", e);
             }
-        } catch (e) {
-            console.error("Error parsing currentUser for tenant", e);
         }
 
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -131,11 +133,16 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     const [settings, setSettings] = useState<AppSettings>(defaultSettings);
     const [globalSearchTerm, setGlobalSearchTerm] = useState('');
 
+    const callApi = useCallback(async (action: string, payload?: any) => {
+        const domain = currentUser?.email ? currentUser.email.split('@')[1] : undefined;
+        return callApiBase(action, payload, domain);
+    }, [currentUser]);
+
     // Fetch settings on mount (needed for Login page logo/name)
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const data = await callApi('getSettings');
+                const data = await callApiBase('getSettings');
                 if (data.settings) {
                     setSettings(data.settings);
                     
