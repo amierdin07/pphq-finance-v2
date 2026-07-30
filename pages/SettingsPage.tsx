@@ -33,6 +33,7 @@ const SettingsPage = () => {
     const [appLogoUrl, setAppLogoUrl] = useState(settings.appLogoUrl || '');
     const [appName, setAppName] = useState(settings.appName || '');
     const [appSubtitle, setAppSubtitle] = useState(settings.appSubtitle || '');
+    const [geminiApiKey, setGeminiApiKey] = useState(settings.geminiApiKey || '');
     const [isSavingBranding, setIsSavingBranding] = useState(false);
 
     // Profile State
@@ -166,7 +167,7 @@ const SettingsPage = () => {
     const handleSaveBranding = async () => {
         setIsSavingBranding(true);
         try {
-            await updateSettings({ appLogoUrl, appName, appSubtitle });
+            await updateSettings({ appLogoUrl, appName, appSubtitle, geminiApiKey });
             showAlert("Berhasil", 'Pengaturan tampilan berhasil disimpan.', "success");
         } catch (error) {
             showAlert("Gagal", 'Gagal menyimpan pengaturan.', "danger");
@@ -365,6 +366,18 @@ const SettingsPage = () => {
                                     </div>
                                 </div>
                                 
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Gemini API Key (Tumpuk dengan Koma)</label>
+                                    <input 
+                                        type="text" 
+                                        value={geminiApiKey} 
+                                        onChange={e => setGeminiApiKey(e.target.value)}
+                                        placeholder="Contoh: AIzaSyA123...,AIzaSyB456..."
+                                        className="mt-2 w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-slate-700"
+                                    />
+                                    <p className="text-[9px] text-slate-400 mt-1 ml-1 font-medium">Anda bisa memasukkan beberapa API Key dipisahkan dengan tanda koma (tanpa spasi). Jika kosong, sistem akan menggunakan API Key dari file .env server.</p>
+                                </div>
+
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Logo Aplikasi</label>
                                     <div className="mt-3 flex items-center gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 group">

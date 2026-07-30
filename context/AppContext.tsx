@@ -57,7 +57,8 @@ const callApiBase = async (action: string, payload?: any, tenantDomainOverride?:
 const defaultSettings: AppSettings = {
     appLogoUrl: '',
     appName: 'PPHQ Finance',
-    appSubtitle: 'Sistem Keuangan PPHQ'
+    appSubtitle: 'Sistem Keuangan PPHQ',
+    geminiApiKey: ''
 };
 
 const defaultContextValue: AppContextType = {

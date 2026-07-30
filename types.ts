@@ -33,6 +33,7 @@ export interface AppSettings {
   appLogoUrl: string;
   appName: string;
   appSubtitle: string;
+  geminiApiKey?: string;
 }
 
 export interface Branch {

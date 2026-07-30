@@ -523,14 +523,18 @@ async function startServer() {
     }
 
     try {
-      if (!process.env.GEMINI_API_KEY) {
-        return res.json({ status: "error", message: "API Key Gemini belum diset di server. Silakan hubungi admin untuk menambahkan GEMINI_API_KEY di file .env." });
+      // Ambil API Key dari database settings terlebih dahulu, jika tidak ada baru fallback ke .env
+      const dbKeyRow = db.prepare("SELECT value FROM settings WHERE key = 'geminiApiKey'").get() as any;
+      const apiKeyString = dbKeyRow?.value || process.env.GEMINI_API_KEY || "";
+
+      if (!apiKeyString) {
+        return res.json({ status: "error", message: "API Key Gemini belum dikonfigurasi. Silakan isi Gemini API Key di Halaman Pengaturan (Superadmin) atau tambahkan GEMINI_API_KEY di file .env." });
       }
 
       // Pisahkan key dengan koma untuk mendukung penumpukan key (stacked keys)
-      const keys = process.env.GEMINI_API_KEY.split(",").map(k => k.trim()).filter(Boolean);
+      const keys = apiKeyString.split(",").map((k: string) => k.trim()).filter(Boolean);
       if (keys.length === 0) {
-        return res.json({ status: "error", message: "API Key Gemini tidak valid atau kosong di file .env." });
+        return res.json({ status: "error", message: "API Key Gemini tidak valid atau kosong." });
       }
 
       // 1. Ambil data transaksi milik user ini secara aman
