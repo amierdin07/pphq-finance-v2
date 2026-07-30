@@ -375,21 +375,17 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         const newTransactionData = { ...transaction, createdBy: currentUser.id };
         const data = await callApi('addTransaction', { transaction: newTransactionData });
         setAllTransactions(prev => [...prev, data.newTransaction]);
-        await refreshAllData();
-    }, [currentUser, refreshAllData]);
+    }, [currentUser]);
 
     const updateTransaction = useCallback(async (transaction: Transaction) => {
          const data = await callApi('updateTransaction', { transaction });
          setAllTransactions(prev => prev.map(t => t.id === data.updatedTransaction.id ? data.updatedTransaction : t));
-         await refreshAllData();
-    }, [refreshAllData]);
+    }, []);
 
     const deleteTransaction = useCallback(async (id: string) => {
         await callApi('deleteTransaction', { id });
         setAllTransactions(prev => prev.filter(t => t.id !== id));
-        // Force refresh to ensure other pages (like Syahriyah) stay in sync
-        await refreshAllData();
-    }, [refreshAllData]);
+    }, []);
 
     const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
         const data = await callApi('addCategory', { category });
