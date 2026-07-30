@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { Transaction, TransactionType, TransactionNature, Category, Role } from '../types';
-import { PencilIcon, TrashIcon, CameraIcon, ImageIcon, IncomeIcon, ExpenseIcon, PlusIcon } from '../constants';
+import { PencilIcon, TrashIcon, CameraIcon, ImageIcon, IncomeIcon, ExpenseIcon, PlusIcon, CopyIcon } from '../constants';
 import { formatCurrencyInput, parseCurrencyInput } from '../utils';
 import { compressImage } from '../utils/imageUtils';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -514,7 +514,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                                                 className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
                                                 title="Salin Transaksi (Duplikat)"
                                             >
-                                                <PlusIcon className="w-4 h-4" />
+                                                <CopyIcon className="w-4 h-4" />
                                             </button>
                                             <button 
                                                 onClick={() => openModal(t)} 
@@ -651,6 +651,14 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                 branchName={currentUser?.role === Role.Admin || currentUser?.role === Role.SubAdmin ? 'semua unit' : branches.find(b => b.id === currentUser?.branchId)?.name}
                 mode={exportMode}
             />
+            {/* Floating Action Button (FAB) */}
+            <button
+                onClick={() => openModal()}
+                className="fixed bottom-6 right-6 z-50 p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-2xl shadow-emerald-500/40 transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
+                title={`Tambah ${type === TransactionType.Income ? 'Pemasukan' : 'Pengeluaran'}`}
+            >
+                <PlusIcon className="w-6 h-6" />
+            </button>
         </div>
     );
 };
