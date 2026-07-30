@@ -4,6 +4,8 @@ import { useAppContext } from '../hooks/useAppContext';
 import { SearchIcon, MenuIcon, BellIcon, LogoutIcon } from '../constants';
 import { Role } from '../types';
 import AnnouncementsModal from './AnnouncementsModal';
+import { Sparkles } from 'lucide-react';
+
 
 interface HeaderProps {
     toggleSidebar: () => void;
@@ -34,6 +36,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* HQAI Chat Button */}
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('toggle-hq-ai'))}
+                        className="p-2.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all flex items-center gap-1.5 font-bold text-xs"
+                        title="Tanya HQAI (Asisten Keuangan)"
+                    >
+                        <Sparkles className="w-5 h-5 text-emerald-500 animate-pulse" />
+                        <span className="hidden sm:inline">HQAI</span>
+                    </button>
+
                     {/* Bell button with unread badge */}
                     <button
                         onClick={() => setNotifOpen(true)}

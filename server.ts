@@ -5,6 +5,10 @@ import { fileURLToPath } from "url";
 import Database from "better-sqlite3";
 import cors from "cors";
 import fs from "fs";
+import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -495,6 +499,111 @@ async function startServer() {
     } catch (err: any) {
       console.error(err);
       return res.json({ status: "error", message: err.message });
+    }
+  });
+
+  app.post("/api/gemini-chat", async (req, res) => {
+    const { message, history, user } = req.body;
+    
+    if (!user) {
+      return res.json({ status: "error", message: "User tidak terautentikasi." });
+    }
+
+    let db = dbPphq;
+    const tenantHeader = req.headers["x-tenant-domain"];
+    const host = req.headers.host || "";
+    const referer = req.headers.referer || "";
+    
+    if (tenantHeader === "pjc.com" || 
+        (typeof tenantHeader === "string" && tenantHeader.toLowerCase().endsWith("pjc.com")) ||
+        host.toLowerCase().includes("pjc.com") ||
+        referer.toLowerCase().includes("pjc.com") ||
+        (user.email && typeof user.email === "string" && user.email.toLowerCase().endsWith("@pjc.com"))) {
+      db = dbPjc;
+    }
+
+    try {
+      if (!process.env.GEMINI_API_KEY) {
+        return res.json({ status: "error", message: "API Key Gemini belum diset di server. Silakan hubungi admin untuk menambahkan GEMINI_API_KEY di file .env." });
+      }
+
+      // Pisahkan key dengan koma untuk mendukung penumpukan key (stacked keys)
+      const keys = process.env.GEMINI_API_KEY.split(",").map(k => k.trim()).filter(Boolean);
+      if (keys.length === 0) {
+        return res.json({ status: "error", message: "API Key Gemini tidak valid atau kosong di file .env." });
+      }
+
+      // 1. Ambil data transaksi milik user ini secara aman
+      let transactions: any[] = [];
+      if (user.role === "Admin" || user.role === "SubAdmin") {
+        // Admin bisa melihat semua transaksi
+        transactions = db.prepare("SELECT * FROM transactions ORDER BY date DESC LIMIT 300").all();
+      } else {
+        // User cabang hanya bisa melihat transaksi cabangnya
+        transactions = db.prepare("SELECT * FROM transactions WHERE branchId = ? ORDER BY date DESC LIMIT 300").all(user.branchId);
+      }
+
+      // Ambil data cabang untuk konteks nama cabang
+      const branches = db.prepare("SELECT * FROM branches").all();
+
+      // Format data transaksi menjadi ringkasan teks agar hemat token
+      const transContext = transactions.map((t: any) => {
+        const branchName = branches.find((b: any) => b.id === t.branchId)?.name || t.branchId;
+        return `- Tanggal: ${t.date ? t.date.split("T")[0] : "-"}, Deskripsi: ${t.description}, Nominal: Rp ${Number(t.amount || 0).toLocaleString("id-ID")}, Tipe: ${t.type === "Income" ? "Pemasukan" : "Pengeluaran"}, Kategori: ${t.category}, Unit/Cabang: ${branchName}`;
+      }).join("\n");
+
+      // Buat system instruction / prompt
+      const systemInstruction = `Anda adalah Asisten Keuangan AI Pintar bernama "${user.email.endsWith("@pjc.com") ? "PJC Finance AI" : "PPHQ Finance AI"}".
+Anda berbicara kepada user bernama "${user.name}" dengan peran/role "${user.role}".
+Tugas Anda adalah membantu menganalisis, merangkum, dan menjawab pertanyaan seputar keuangan mereka secara ramah, sopan, ringkas, dan profesional menggunakan bahasa Indonesia.
+
+Berikut adalah data transaksi terbaru (maksimal 300 transaksi terakhir) yang terkait dengan user ini (data ini sudah difilter secara aman, Anda hanya boleh membahas data ini):
+${transContext || "Tidak ada transaksi tercatat."}
+
+Aturan penting:
+1. Jangan sebutkan atau bahas data dari akun/cabang lain yang tidak ada di daftar transaksi di atas.
+2. Jika user menanyakan tentang budget atau saran hemat, berikan jawaban taktis yang bersahabat.
+3. Selalu format angka nominal uang dalam format rupiah (contoh: Rp 50.000).
+4. Gunakan gaya bahasa santai tapi sopan (bisa memanggil "Bos" atau "Kak" sesuai kebiasaan mereka).
+5. Jangan buat data transaksi fiktif jika tidak ada di dalam daftar di atas.`;
+
+      // Kirim riwayat chat + pesan baru ke Gemini
+      const contents = [
+        { role: "user", parts: [{ text: systemInstruction }] },
+        ...(history || []).map((h: any) => ({
+          role: h.role === "user" ? "user" : "model",
+          parts: [{ text: h.text }]
+        })),
+        { role: "user", parts: [{ text: message }] }
+      ];
+
+      // Coba satu per satu key yang tersedia (penumpukan key)
+      let responseText = "";
+      let isSuccess = false;
+      let lastError: any = null;
+
+      for (let i = 0; i < keys.length; i++) {
+        try {
+          const genAI = new GoogleGenerativeAI(keys[i]);
+          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+          const result = await model.generateContent({ contents });
+          responseText = result.response.text();
+          isSuccess = true;
+          break; // Berhasil! Keluar dari loop
+        } catch (err: any) {
+          console.warn(`[Gemini API Warning] Key ke-${i + 1} gagal digunakan:`, err.message);
+          lastError = err;
+        }
+      }
+
+      if (!isSuccess) {
+        throw new Error("Semua API Key Gemini yang ditumpuk gagal digunakan atau telah habis kuota: " + (lastError?.message || ""));
+      }
+
+      return res.json({ status: "success", data: responseText });
+    } catch (error: any) {
+      console.error("Gemini API Error:", error);
+      return res.json({ status: "error", message: "Gagal memproses ke Gemini: " + error.message });
     }
   });
 

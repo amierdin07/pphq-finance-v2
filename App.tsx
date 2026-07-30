@@ -7,6 +7,8 @@ import Header from './components/Header';
 import { TransactionNature, TransactionType, Role } from './types';
 import { Logo } from './constants';
 import BottomNav from './components/BottomNav';
+import GeminiChatbot from './components/GeminiChatbot';
+
 
 // Lazy load pages for better performance
 const Login = lazy(() => import('./pages/Login'));
@@ -55,6 +57,7 @@ const PrivateLayout = () => {
           </div>
         </main>
         <BottomNav />
+        <GeminiChatbot />
       </div>
     </div>
   );
