@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { Transaction, TransactionType, TransactionNature, Category, Role } from '../types';
-import { PencilIcon, TrashIcon, CameraIcon, ImageIcon, IncomeIcon, ExpenseIcon } from '../constants';
+import { PencilIcon, TrashIcon, CameraIcon, ImageIcon, IncomeIcon, ExpenseIcon, PlusIcon } from '../constants';
 import { formatCurrencyInput, parseCurrencyInput } from '../utils';
 import { compressImage } from '../utils/imageUtils';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -170,6 +170,20 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
             attachmentUrl: transaction?.attachmentUrl || '',
         });
         setAttachmentPreview(transaction?.attachmentUrl || null);
+        setIsModalOpen(true);
+    };
+
+    const openDuplicateModal = (transaction: Transaction) => {
+        setCurrentTransaction(null);
+        const initialCategory = transaction.category || (availableCategories.length > 0 ? availableCategories[0].name : '');
+        setFormState({
+            date: new Date().toISOString().split('T')[0],
+            category: initialCategory,
+            description: transaction.description,
+            amount: formatCurrencyInput(transaction.amount.toString()),
+            attachmentUrl: transaction.attachmentUrl || '',
+        });
+        setAttachmentPreview(transaction.attachmentUrl || null);
         setIsModalOpen(true);
     };
 
@@ -495,6 +509,13 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <div className="flex items-center justify-center gap-2">
+                                            <button 
+                                                onClick={() => openDuplicateModal(t)} 
+                                                className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
+                                                title="Salin Transaksi (Duplikat)"
+                                            >
+                                                <PlusIcon className="w-4 h-4" />
+                                            </button>
                                             <button 
                                                 onClick={() => openModal(t)} 
                                                 className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
