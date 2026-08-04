@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
-import { SearchIcon, MenuIcon, BellIcon, LogoutIcon } from '../constants';
+import { SearchIcon, MenuIcon, BellIcon, LogoutIcon, SparklesIcon } from '../constants';
 import { Role } from '../types';
 import AnnouncementsModal from './AnnouncementsModal';
+import HQAIModal from './HQAIModal';
 import { Sparkles } from 'lucide-react';
-
 
 interface HeaderProps {
     toggleSidebar: () => void;
@@ -14,6 +14,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     const { currentUser, logout, announcements, globalSearchTerm, setGlobalSearchTerm, showConfirm } = useAppContext();
     const [notifOpen, setNotifOpen] = useState(false);
+    const [hqaiOpen, setHqaiOpen] = useState(false);
 
     const unreadCount = announcements.filter(a => !a.isRead).length;
 
@@ -35,15 +36,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    {/* HQAI Chat Button */}
+                <div className="flex items-center gap-3">
+                    {/* HQAI Button next to BellIcon */}
                     <button
-                        onClick={() => window.dispatchEvent(new CustomEvent('toggle-hq-ai'))}
-                        className="p-2.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all flex items-center gap-1.5 font-bold text-xs"
-                        title="Tanya HQAI (Asisten Keuangan)"
+                        onClick={() => setHqaiOpen(true)}
+                        className="relative px-3 py-2 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all flex items-center gap-1.5 font-bold text-xs border border-emerald-200/80 shadow-2xs hover:scale-105"
+                        title="HQAI Assistant"
                     >
-                        <Sparkles className="w-5 h-5 text-emerald-500 animate-pulse" />
-                        <span className="hidden sm:inline">HQAI</span>
+                        <SparklesIcon className="w-4 h-4 text-emerald-600 animate-pulse" />
+                        <span>HQAI</span>
                     </button>
 
                     {/* Bell button with unread badge */}
@@ -96,6 +97,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             </header>
 
             <AnnouncementsModal isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
+            <HQAIModal isOpen={hqaiOpen} onClose={() => setHqaiOpen(false)} />
         </>
     );
 };

@@ -34,6 +34,10 @@ export interface AppSettings {
   appName: string;
   appSubtitle: string;
   geminiApiKey?: string;
+  geminiApiKeyPrimary?: string;
+  geminiApiKeySecondary?: string;
+  hqaiBaseUrl?: string;
+  hqaiModel?: string;
 }
 
 export interface Branch {

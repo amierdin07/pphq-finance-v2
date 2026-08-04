@@ -79,6 +79,9 @@ Array.js
 dist/
 build/
 
-# Database
+# Database & Uploads
 database.sqlite
+*.sqlite*
+*.upload.tmp
+repair-db-channels.cjs
 uploads/

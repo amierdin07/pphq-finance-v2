@@ -3,7 +3,7 @@ import { useAppContext } from '../hooks/useAppContext';
 import { Role, AppSettings } from '../types';
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import { gapi } from 'gapi-script';
-import { CameraIcon, UserIcon, SettingsIcon, LogoutIcon, TrashIcon } from '../constants';
+import { CameraIcon, UserIcon, SettingsIcon, LogoutIcon, TrashIcon, SparklesIcon } from '../constants';
 import { compressImage } from '../utils/imageUtils';
 
 // Google Icon
@@ -46,6 +46,13 @@ const SettingsPage = () => {
     const [unitTreasurerName, setUnitTreasurerName] = useState(currentUser?.unitTreasurerName || '');
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isCompressing, setIsCompressing] = useState(false);
+
+    // HQAI Double API Settings (SuperAdmin Only)
+    const [geminiApiKeyPrimary, setGeminiApiKeyPrimary] = useState(settings.geminiApiKeyPrimary || '');
+    const [geminiApiKeySecondary, setGeminiApiKeySecondary] = useState(settings.geminiApiKeySecondary || '');
+    const [hqaiBaseUrl, setHqaiBaseUrl] = useState(settings.hqaiBaseUrl || '');
+    const [hqaiModel, setHqaiModel] = useState(settings.hqaiModel || '');
+    const [isSavingHQAI, setIsSavingHQAI] = useState(false);
 
     useEffect(() => {
         const initClient = () => {
@@ -173,6 +180,24 @@ const SettingsPage = () => {
             showAlert("Gagal", 'Gagal menyimpan pengaturan.', "danger");
         } finally {
             setIsSavingBranding(false);
+        }
+    };
+
+    const handleSaveHQAI = async () => {
+        setIsSavingHQAI(true);
+        try {
+            await updateSettings({
+                ...settings,
+                geminiApiKeyPrimary,
+                geminiApiKeySecondary,
+                hqaiBaseUrl,
+                hqaiModel
+            });
+            showAlert("Berhasil", 'Pengaturan HQAI AI Assistant berhasil disimpan.', "success");
+        } catch (error) {
+            showAlert("Gagal", 'Gagal menyimpan pengaturan HQAI.', "danger");
+        } finally {
+            setIsSavingHQAI(false);
         }
     };
 
@@ -414,6 +439,93 @@ const SettingsPage = () => {
 
                 {currentUser?.role === Role.Admin && (
                     <div className="space-y-8">
+                        {/* HQAI Settings (SuperAdmin Only) */}
+                        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                            <h2 className="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                <span className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                                    <SparklesIcon className="w-5 h-5" />
+                                </span>
+                                Pengaturan HQAI (AI Assistant)
+                            </h2>
+                            <p className="text-slate-500 text-xs mb-6 ml-11 leading-relaxed">
+                                Konfigurasi Double API Key Gemini (Primary & Backup) untuk fitur HQAI Chatbot.
+                            </p>
+
+                            <div className="space-y-5">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                        Primary Gemini API Key (API Utama)
+                                    </label>
+                                    <input
+                                        type="password"
+                                        placeholder="Masukkan API Key Google Gemini Utama (AIzaSy...)"
+                                        value={geminiApiKeyPrimary}
+                                        onChange={(e) => setGeminiApiKeyPrimary(e.target.value)}
+                                        className="mt-1.5 w-full px-5 py-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-mono text-sm text-slate-700"
+                                    />
+                                    <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                                        API Key ini diprioritaskan terlebih dahulu untuk setiap request percakapan HQAI.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                        Secondary Gemini API Key (API Cadangan / Failover)
+                                    </label>
+                                    <input
+                                        type="password"
+                                        placeholder="Masukkan API Key Google Gemini Cadangan"
+                                        value={geminiApiKeySecondary}
+                                        onChange={(e) => setGeminiApiKeySecondary(e.target.value)}
+                                        className="mt-1.5 w-full px-5 py-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-mono text-sm text-slate-700"
+                                    />
+                                    <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                                        Otomatis digunakan jika API Key Utama mengalami limit/kuota habis (Error 429).
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                        Custom Base URL (Opsional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Contoh: https://openrouter.ai/api/v1 atau https://api.groq.com/openai/v1"
+                                        value={hqaiBaseUrl}
+                                        onChange={(e) => setHqaiBaseUrl(e.target.value)}
+                                        className="mt-1.5 w-full px-5 py-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-mono text-sm text-slate-700"
+                                    />
+                                    <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                                        Kosongkan jika memakai Google AI Studio. Isi jika memakai OpenRouter / Groq / OpenAI / SenaAI Router.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                        Model AI (Opsional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Contoh: deepseek/deepseek-chat, gpt-4o-mini, atau gemini-2.0-flash"
+                                        value={hqaiModel}
+                                        onChange={(e) => setHqaiModel(e.target.value)}
+                                        className="mt-1.5 w-full px-5 py-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-mono text-sm text-slate-700"
+                                    />
+                                    <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                                        Default kosong (`gemini-2.0-flash`). Bisa diisi nama model sesuai provider yang Anda gunakan.
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={handleSaveHQAI}
+                                    disabled={isSavingHQAI}
+                                    className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50 text-sm"
+                                >
+                                    {isSavingHQAI ? 'Menyimpan...' : 'Simpan Pengaturan HQAI'}
+                                </button>
+                            </div>
+                        </div>
+
                         <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 h-full">
                             <h2 className="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
                                 <span className="p-2 bg-yellow-50 rounded-lg"><GoogleIcon className="w-5 h-5" /></span>

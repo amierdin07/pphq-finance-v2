@@ -159,6 +159,339 @@ async function startServer() {
   };
 
   // API Route - Handling actions from AppContext
+  app.post("/api/hqai/chat", async (req, res) => {
+    const { prompt, chatHistory, currentUser } = req.body;
+    if (!prompt || typeof prompt !== "string") {
+      return res.json({ status: "error", message: "Prompt tidak boleh kosong." });
+    }
+
+    let db = dbPphq;
+    const tenantHeader = req.headers["x-tenant-domain"];
+    const host = req.headers.host || "";
+    const referer = req.headers.referer || "";
+
+    if (tenantHeader === "pjc.com" || 
+        (typeof tenantHeader === "string" && tenantHeader.toLowerCase().endsWith("pjc.com")) ||
+        host.toLowerCase().includes("pjc.com") ||
+        referer.toLowerCase().includes("pjc.com")) {
+      db = dbPjc;
+    }
+
+    try {
+      const settingsRows = db.prepare("SELECT * FROM settings").all() as any[];
+      const settings = settingsRows.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {}) as any;
+
+      const branches = db.prepare("SELECT id, name, location FROM branches").all() as any[];
+      const categories = db.prepare("SELECT name, type FROM categories").all() as any[];
+      const students = db.prepare("SELECT id, name, branchId, isActive FROM students").all() as any[];
+      const transactions = db.prepare("SELECT date, description, amount, category, type, nature, branchId FROM transactions ORDER BY date DESC LIMIT 50").all() as any[];
+
+      // Monthly summary calculation per YYYY-MM
+      const monthlySummary: Record<string, { income: number; expense: number }> = {};
+      const allTxForMonth = db.prepare("SELECT date, amount, type, nature, branchId FROM transactions").all() as any[];
+      
+      allTxForMonth.forEach((tx: any) => {
+        if ((tx.nature === 'Money' || !tx.nature) && tx.date) {
+          const monthKey = tx.date.slice(0, 7); // e.g. "2026-05"
+          if (currentUser && currentUser.branchId && currentUser.role !== "Admin" && tx.branchId !== currentUser.branchId) {
+            return; // Skip transactions from other branches for unit user
+          }
+          if (!monthlySummary[monthKey]) {
+            monthlySummary[monthKey] = { income: 0, expense: 0 };
+          }
+          if (tx.type === 'Income') monthlySummary[monthKey].income += (tx.amount || 0);
+          if (tx.type === 'Expense') monthlySummary[monthKey].expense += (tx.amount || 0);
+        }
+      });
+
+      const formattedMonthlyList = Object.keys(monthlySummary)
+        .sort().reverse()
+        .slice(0, 12)
+        .map(m => `${m}: Pemasukan Rp ${monthlySummary[m].income.toLocaleString('id-ID')}, Pengeluaran Rp ${monthlySummary[m].expense.toLocaleString('id-ID')}`);
+
+      const formattedMonthlyStr = formattedMonthlyList.length > 0 ? formattedMonthlyList.join("\n- ") : "Belum ada transaksi.";
+      const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      let totalIncome = 0;
+      let totalExpense = 0;
+      allTxForMonth.forEach((tx: any) => {
+        if (tx.nature === 'Money' || !tx.nature) {
+          if (tx.type === 'Income') totalIncome += (tx.amount || 0);
+          if (tx.type === 'Expense') totalExpense += (tx.amount || 0);
+        }
+      });
+      const netBalance = totalIncome - totalExpense;
+
+      let userUnitContext = "";
+      if (currentUser && currentUser.branchId && currentUser.role !== "Admin") {
+        const userBranchObj = branches.find((b: any) => b.id === currentUser.branchId);
+        const userBranchName = userBranchObj ? userBranchObj.name : "Unit Cabang";
+
+        let unitIncome = 0;
+        let unitExpense = 0;
+        const unitTx = db.prepare("SELECT date, description, amount, category, type, nature FROM transactions WHERE branchId = ? ORDER BY date DESC").all(currentUser.branchId) as any[];
+        unitTx.forEach((tx: any) => {
+          if (tx.nature === 'Money' || !tx.nature) {
+            if (tx.type === 'Income') unitIncome += (tx.amount || 0);
+            if (tx.type === 'Expense') unitExpense += (tx.amount || 0);
+          }
+        });
+        const unitNetBalance = unitIncome - unitExpense;
+        const unitStudents = students.filter((s: any) => s.branchId === currentUser.branchId);
+
+        // Build per-month per-CATEGORY breakdown (matches what user sees in the app)
+        const unitCategoryMonthMap: Record<string, Record<string, number>> = {};
+        // Also build per-month per-keyword (first word of desc) for item-level queries
+        const unitKeywordMonthMap: Record<string, Record<string, number>> = {};
+        unitTx.forEach((tx: any) => {
+          if ((tx.nature === 'Money' || !tx.nature) && tx.type === 'Expense' && tx.date) {
+            const monthKey = tx.date.slice(0, 7);
+            // Group by category
+            const cat = (tx.category || 'Lainnya').trim();
+            if (!unitCategoryMonthMap[monthKey]) unitCategoryMonthMap[monthKey] = {};
+            unitCategoryMonthMap[monthKey][cat] = (unitCategoryMonthMap[monthKey][cat] || 0) + (tx.amount || 0);
+            // Group by first keyword of description
+            if (tx.description) {
+              const keyword = tx.description.trim().toLowerCase().split(/\s+/)[0];
+              if (!unitKeywordMonthMap[monthKey]) unitKeywordMonthMap[monthKey] = {};
+              unitKeywordMonthMap[monthKey][keyword] = (unitKeywordMonthMap[monthKey][keyword] || 0) + (tx.amount || 0);
+            }
+          }
+        });
+        const bulanNames: Record<string, string> = {
+          '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+          '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+          '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+        };
+        const months = Object.keys(unitCategoryMonthMap).sort().reverse().slice(0, 6);
+        const unitDescBreakdown = months.map(m => {
+          const [yr, mo] = m.split('-');
+          const label = `${bulanNames[mo] || mo} ${yr}`;
+          // Category breakdown
+          const catItems = Object.entries(unitCategoryMonthMap[m] || {})
+            .sort((a, b) => b[1] - a[1])
+            .map(([cat, amt]) => `  * ${cat}: Rp ${amt.toLocaleString('id-ID')}`)
+            .join('\n');
+          // Keyword breakdown (for item-level queries like "beras", "bensin")
+          const kwItems = Object.entries(unitKeywordMonthMap[m] || {})
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20)
+            .map(([kw, amt]) => `  * ${kw}: Rp ${amt.toLocaleString('id-ID')}`)
+            .join('\n');
+          return `=== ${label} ===\nPer Kategori:\n${catItems}\nPer Kata Kunci Deskripsi:\n${kwItems}`;
+        }).join('\n\n');
+
+        userUnitContext = `PENGGUNA SAAT INI (AKUN BENDAHARA / AKUN UNIT):
+- Nama Pengguna: ${currentUser.name || 'Bendahara Unit'}
+- Role / Hak Akses: Bendahara Unit Cabang (${userBranchName})
+- Unit / Cabang Terikat: ${userBranchName} (ID: ${currentUser.branchId})
+
+DATA KEUANGAN SPESIFIK UNIT (${userBranchName.toUpperCase()}):
+- Total Pemasukan Uang Unit ${userBranchName}: Rp ${unitIncome.toLocaleString('id-ID')}
+- Total Pengeluaran Uang Unit ${userBranchName}: Rp ${unitExpense.toLocaleString('id-ID')}
+- Saldo Kas Bersih Unit ${userBranchName}: Rp ${unitNetBalance.toLocaleString('id-ID')}
+- Jumlah Santri Unit Ini: ${unitStudents.length} santri (${unitStudents.filter((s: any) => s.isActive).length} aktif)
+
+RINGKASAN PEMASUKAN & PENGELUARAN PER BULAN UNIT ${userBranchName.toUpperCase()}:
+- ${formattedMonthlyStr}
+
+RINGKASAN PENGELUARAN PER KATEGORI & PER KATA KUNCI (6 BULAN TERAKHIR):
+${unitDescBreakdown}
+
+Sample 20 Transaksi Terakhir Unit Ini: ${JSON.stringify(unitTx.slice(0, 20))}
+
+INSTRUKSI WAJIB UNTUK HQAI:
+- Pengguna yang sedang bertanya adalah Bendahara dari **Unit ${userBranchName}**.
+- Jika pengguna menanyakan kategori (misal: bisyaroh, bahan makanan, listrik), cari di bagian "Per Kategori" pada bulan yang ditanyakan.
+- Jika pengguna menanyakan item spesifik (misal: beras, bensin), cari di bagian "Per Kata Kunci Deskripsi".
+- DILARANG MEMBERIKAN saldo gabungan SuperAdmin (semua cabang) kepada pengguna akun unit ini!`;
+      } else {
+        userUnitContext = `PENGGUNA SAAT INI (AKUN SUPERADMIN / PUSAT):
+- Role: SuperAdmin (Admin Pusat)
+- Hak Akses: Mengelola Seluruh Unit / Cabang (${branches.map((b: any) => b.name).join(', ')})
+
+DATA KEUANGAN GLOBAL (GABUNGAN SELURUH UNIT):
+- Total Pemasukan Seluruh Cabang: Rp ${totalIncome.toLocaleString('id-ID')}
+- Total Pengeluaran Seluruh Cabang: Rp ${totalExpense.toLocaleString('id-ID')}
+- Saldo Kas Bersih Total Gabungan: Rp ${netBalance.toLocaleString('id-ID')}
+- RINGKASAN PEMASUKAN & PENGELUARAN PER BULAN GABUNGAN:
+- ${formattedMonthlyStr}
+- Total Santri Seluruh Cabang: ${students.length} santri (${students.filter((s: any) => s.isActive).length} aktif)
+- Sample 10 Transaksi Terakhir: ${JSON.stringify(transactions.slice(0, 10))}`;
+      }
+
+      const systemPrompt = `Anda adalah HQAI, Asisten AI Cerdas Resmi untuk Sistem Keuangan PPHQ Finance v2.
+
+PERATURAN UTAMA:
+1. Anda HANYA diperbolehkan menjawab pertanyaan terkait aplikasi PPHQ Finance v2, termasuk: data keuangan, saldo kas, transaksi (pemasukan & pengeluaran), infaq santri / syahriyah, statistik unit/cabang, serta panduan pengoperasian aplikasi PPHQ Finance.
+2. JIKA pengguna bertanya hal di luar topik aplikasi PPHQ Finance (seperti resep masakan, politik, hiburan, sains, coding umum, atau percakapan umum lainnya yang tidak relevan dengan PPHQ Finance), Anda HARUS MENOLAK dengan sopan dalam Bahasa Indonesia. Contoh respon penolakan: "Mohon maaf, sebagai HQAI saya hanya dapat membantu menjawab pertanyaan seputar aplikasi dan data keuangan PPHQ Finance v2. Silakan tanyakan hal terkait transaksi, saldo kas, atau infaq santri."
+3. JAWAB SINGKAT DAN LANGSUNG. Jangan tampilkan rincian transaksi kecuali pengguna SECARA EKSPLISIT meminta rincian. Contoh jawaban yang BENAR: "Pengeluaran beras bulan Juli sebesar Rp 4.868.000." — Jangan menulis daftar panjang atau rincian per item jika tidak diminta.
+4. DATA MUNGKIN TIDAK LENGKAP. Jika pengguna mengoreksi angka Anda, terima koreksinya dan katakan: "Terima kasih atas koreksinya. Sepertinya ada transaksi yang tidak tertangkap oleh ringkasan data saya. Untuk data lengkap dan akurat, silakan cek langsung di halaman Transaksi."
+
+WAKTU & DATA CONTEXT KEUANGAN REAL-TIME PPHQ FINANCE:
+- Tanggal Hari Ini: ${currentDateStr}
+- Nama Aplikasi: ${settings.appName || 'PPHQ Finance'} (${settings.appSubtitle || 'Sistem Keuangan'})
+- Daftar Cabang/Unit Terdaftar: ${branches.map((b: any) => `${b.name} (${b.location || 'Utama'})`).join(', ')}
+- Kategori Transaksi: ${categories.map((c: any) => `${c.name} [${c.type}]`).join(', ')}
+
+${userUnitContext}
+
+Harap analisis pertanyaan pengguna dan jawab dengan tepat sesuai konteks akun pengguna di atas.`;
+
+      const primaryKey = settings.geminiApiKeyPrimary || process.env.GEMINI_API_KEY || "";
+      const secondaryKey = settings.geminiApiKeySecondary || "";
+      const baseUrl = settings.hqaiBaseUrl || "";
+
+      const apiKeys = [primaryKey, secondaryKey].filter(k => k && typeof k === "string" && k.trim() !== "");
+
+      if (apiKeys.length === 0) {
+        return res.json({
+          status: "success",
+          data: {
+            reply: "⚠️ **API Key HQAI Belum Dikonfigurasi**\n\nSilakan hubungi **SuperAdmin** untuk memasukkan API Key AI di halaman **Pengaturan** > **Pengaturan HQAI** agar fitur AI ini dapat digunakan."
+          }
+        });
+      }
+
+      let aiReply = "";
+      let lastError = null;
+
+      const selectedModel = settings.hqaiModel && settings.hqaiModel.trim() !== "" ? settings.hqaiModel.trim() : null;
+      const candidateModels = selectedModel ? [selectedModel] : ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
+
+      // Sanitize chat history roles for OpenAI/Groq vs Gemini
+      const sanitizedOpenAiMessages = [
+        { role: "system", content: systemPrompt },
+        ...(Array.isArray(chatHistory) ? chatHistory.map((h: any) => ({
+          role: h.role === "assistant" || h.role === "model" ? "assistant" : "user",
+          content: h.content || ""
+        })) : []),
+        { role: "user", content: prompt }
+      ];
+
+      for (let i = 0; i < apiKeys.length; i++) {
+        const apiKey = apiKeys[i].trim();
+
+        for (const modelName of candidateModels) {
+          try {
+            if (baseUrl && baseUrl.trim() !== "") {
+              const cleanBase = baseUrl.replace(/\/$/, "");
+              let targetUrl = "";
+              if (cleanBase.endsWith("/chat/completions")) {
+                targetUrl = cleanBase;
+              } else if (cleanBase.endsWith("/v1")) {
+                targetUrl = `${cleanBase}/chat/completions`;
+              } else {
+                targetUrl = `${cleanBase}/v1/chat/completions`;
+              }
+              const response = await fetch(targetUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                  model: modelName,
+                  messages: sanitizedOpenAiMessages
+                })
+              });
+
+              if (!response.ok) {
+                const errText = await response.text();
+                console.warn(`[HQAI] ${modelName} HTTP ${response.status}: ${errText.slice(0, 200)}`);
+                lastError = new Error(`API Error HTTP ${response.status}: ${errText}`);
+                continue;
+              }
+
+              const resData = await response.json();
+              aiReply = resData.choices?.[0]?.message?.content || "Tidak ada respon dari model.";
+              if (aiReply) break;
+            } else {
+              const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+              const contents = [
+                {
+                  role: "user",
+                  parts: [{ text: `${systemPrompt}\n\nInstruksi Pengguna: ${prompt}` }]
+                }
+              ];
+
+              const response = await fetch(geminiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents })
+              });
+
+              if (!response.ok) {
+                const errText = await response.text();
+                if (response.status === 404 || response.status === 429 || errText.includes("not found") || errText.includes("RESOURCE_EXHAUSTED") || errText.includes("Quota exceeded")) {
+                  console.warn(`[HQAI] Model ${modelName} returned HTTP ${response.status}. Trying next model...`);
+                  lastError = new Error(`Gemini API Error HTTP ${response.status}: ${errText}`);
+                  continue;
+                }
+                throw new Error(`Gemini API Error HTTP ${response.status}: ${errText}`);
+              }
+
+              const resData = await response.json();
+              aiReply = resData.candidates?.[0]?.content?.parts?.[0]?.text || "Tidak ada respon dari Gemini AI.";
+              if (aiReply) break;
+            }
+          } catch (err: any) {
+            lastError = err;
+            if (err.message.includes("404") || err.message.includes("429") || err.message.includes("not found") || err.message.includes("RESOURCE_EXHAUSTED") || err.message.includes("Quota exceeded")) {
+              continue;
+            }
+            console.warn(`[HQAI Failover] API Key ke-${i + 1} (${modelName}) gagal:`, err.message);
+          }
+        }
+
+        if (aiReply) break;
+      }
+
+      if (!aiReply) {
+        if (lastError && (lastError.message.includes("ACCESS_TOKEN_TYPE_UNSUPPORTED") || lastError.message.includes("UNAUTHENTICATED") || lastError.message.includes("401"))) {
+          return res.json({
+            status: "success",
+            data: {
+              reply: "⚠️ **Tipe Kunci Auth Tidak Didukung (ACCESS_TOKEN_TYPE_UNSUPPORTED)**\n\nKunci berawalan `AQ...` pada screenshot Anda adalah **Auth Key / OAuth Access Token**, bukan **Standard REST API Key** untuk `generateContent`.\n\n👉 **Cara Membuat Standard REST API Key di Google AI Studio**:\n1. Buka [Google AI Studio (aistudio.google.com/app/apikey)](https://aistudio.google.com/app/apikey).\n2. Klik **Create API Key** -> pilih **Create API Key in new project**.\n3. Salin kunci berawalan **`AIzaSy...`** lalu tempelkan ke menu **Pengaturan HQAI**."
+            }
+          });
+        }
+        if (lastError && (lastError.message.includes("API_KEY_INVALID") || lastError.message.includes("API key not valid"))) {
+          return res.json({
+            status: "success",
+            data: {
+              reply: "⚠️ **API Key Gemini Tidak Valid**\n\nAPI Key yang terpasang belum valid atau belum diisi dengan benar.\n\n👉 Silakan masuk sebagai **SuperAdmin**, lalu buka menu **Pengaturan** > **Pengaturan HQAI** dan masukkan **API Key Gemini** resmi dari [Google AI Studio](https://aistudio.google.com/app/apikey)."
+            }
+          });
+        }
+        if (lastError && (lastError.message.includes("403") || lastError.message.includes("PERMISSION_DENIED") || lastError.message.includes("denied access"))) {
+          return res.json({
+            status: "success",
+            data: {
+              reply: "⚠️ **Akses API Key Ditolak (Google Error 403: Permission Denied)**\n\nGoogle menolak akses API Key ini (*Your project has been denied access*).\n\n👉 **Solusi Pengurus**: Silakan buat API Key baru menggunakan **akun Gmail standar lain** di [Google AI Studio](https://aistudio.google.com/app/apikey) (pilih *Create API key in new project*), lalu simpan di menu **Pengaturan HQAI**."
+            }
+          });
+        }
+        if (lastError && (lastError.message.includes("limit: 0") || lastError.message.includes("429") || lastError.message.includes("RESOURCE_EXHAUSTED") || lastError.message.includes("Quota exceeded") || lastError.message.includes("rate_limit"))) {
+          const isGroq = baseUrl && baseUrl.includes("groq");
+          const isCustom = baseUrl && baseUrl.trim() !== "";
+          let rateLimitMsg = "";
+          rateLimitMsg = "Mohon maaf, saya sedang tidak dapat memproses pertanyaan Anda saat ini. Silakan coba beberapa saat lagi. 🙏";
+          return res.json({ status: "success", data: { reply: rateLimitMsg } });
+        }
+        throw lastError || new Error("Gagal mendapatkan respon dari AI.");
+      }
+
+      return res.json({ status: "success", data: { reply: aiReply } });
+    } catch (err: any) {
+      console.error("HQAI Chat Error:", err);
+      return res.json({
+        status: "error",
+        message: `Gagal memproses pertanyaan HQAI: ${err.message || err}`
+      });
+    }
+  });
+
   app.post("/api/action", (req, res) => {
     const { action, payload } = req.body;
     
