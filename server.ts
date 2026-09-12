@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import Database from "better-sqlite3";
@@ -10,8 +9,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const currentDir = process.cwd();
 
 // Initialize SQLite Databases
 const dbPphq = new Database("database.sqlite");
@@ -131,9 +129,9 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
 
-async function startServer() {
+function startServer() {
   const app = express();
-  const PORT = process.env.PORT ? parseInt(process.env.PORT) : 4000;
+  const PORT = process.env.PORT || 4000;
 
   app.use(cors());
   app.use(express.json({ limit: "50mb" })); // Increase limit for base64 images
@@ -944,23 +942,30 @@ Aturan penting:
     }
   });
 
+  const distPath = path.join(process.cwd(), "dist");
+  app.use(express.static(distPath));
+
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+    import("vite").then(({ createServer: createViteServer }) => {
+      createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      }).then((vite) => {
+        app.use(vite.middlewares);
+      });
+    }).catch(() => {});
   } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
     app.get(/.*/, (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`Server running at ${PORT}`);
   });
+
+  return app;
 }
 
-startServer();
+const app = startServer();
+export default app;

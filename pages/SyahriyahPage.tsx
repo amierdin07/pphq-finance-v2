@@ -5,6 +5,7 @@ import { UserIcon, ChevronDownIcon, PencilIcon, BranchIcon, CameraIcon, ImageIco
 import { formatCurrencyInput, parseCurrencyInput } from '../utils';
 import { compressImage } from '../utils/imageUtils';
 import ExportModal from '../components/ExportModal';
+import CameraCaptureModal from '../components/CameraCaptureModal';
 
 const SyahriyahPage = () => {
     const { currentUser, allTransactions, branches, students, addStudent, importStudentsWithPayments, updateStudent, deleteStudent, deleteStudents, addTransaction, updateTransaction, deleteTransaction, globalSearchTerm, setGlobalSearchTerm, showConfirm, showAlert } = useAppContext();
@@ -13,6 +14,7 @@ const SyahriyahPage = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
     const importInputRef = useRef<HTMLInputElement>(null);
+    const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [viewingBranchId, setViewingBranchId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -129,6 +131,10 @@ const SyahriyahPage = () => {
             setIsCompressing(false);
             e.target.value = '';
         }
+    };
+
+    const handleCameraCapture = (compressedDataUrl: string) => {
+        setPaymentForm(prev => ({ ...prev, attachmentUrl: compressedDataUrl }));
     };
 
     const handleSavePayment = async () => {
@@ -601,7 +607,7 @@ const SyahriyahPage = () => {
                                 <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nota <span className="normal-case font-normal text-slate-400 text-[8px] ml-1">(max 200kb)</span></label>
                                 <div className="mt-1 space-y-3">
                                     <div className="flex gap-2">
-                                        <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex-1 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"><CameraIcon className="w-3.5 h-3.5" /> Kamera</button>
+                                        <button type="button" onClick={() => setIsCameraModalOpen(true)} className="flex-1 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"><CameraIcon className="w-3.5 h-3.5" /> Kamera</button>
                                         <button type="button" onClick={() => fileInputRef.current?.click()} className="flex-1 py-2.5 bg-slate-50 text-slate-600 rounded-xl font-bold text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"><ImageIcon className="w-3.5 h-3.5" /> File</button>
                                     </div>
                                     
@@ -676,6 +682,13 @@ const SyahriyahPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* Camera Capture Modal */}
+            <CameraCaptureModal
+                isOpen={isCameraModalOpen}
+                onClose={() => setIsCameraModalOpen(false)}
+                onCapture={handleCameraCapture}
+            />
 
             <ExportModal 
                 isOpen={isExportModalOpen} 

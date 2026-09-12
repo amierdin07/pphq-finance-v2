@@ -8,6 +8,7 @@ import { compressImage } from '../utils/imageUtils';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import ExportModal from '../components/ExportModal';
+import CameraCaptureModal from '../components/CameraCaptureModal';
 
 interface TransactionsPageProps {
     type: TransactionType;
@@ -29,6 +30,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
     const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
     const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
     const [isCompressing, setIsCompressing] = useState(false);
+    const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [selectedImageUrl, setSelectedImageUrl] = useState('');
     
@@ -157,6 +159,11 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
             setIsCompressing(false);
             e.target.value = '';
         }
+    };
+
+    const handleCameraCapture = (compressedDataUrl: string) => {
+        setAttachmentPreview(compressedDataUrl);
+        setFormState(prev => ({ ...prev, attachmentUrl: compressedDataUrl }));
     };
 
     const openModal = (transaction: Transaction | null = null) => {
@@ -578,7 +585,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                                     <div className="flex gap-3">
                                         <button 
                                             type="button"
-                                            onClick={() => cameraInputRef.current?.click()}
+                                            onClick={() => setIsCameraModalOpen(true)}
                                             className="flex-1 py-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-100 transition-all"
                                         >
                                             <CameraIcon className="w-4 h-4" />
@@ -640,6 +647,13 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ type, nature = Tran
                     </div>
                 </div>
             )}
+
+            {/* Camera Capture Modal */}
+            <CameraCaptureModal
+                isOpen={isCameraModalOpen}
+                onClose={() => setIsCameraModalOpen(false)}
+                onCapture={handleCameraCapture}
+            />
 
             {/* E-Statement Export Modal */}
             <ExportModal 

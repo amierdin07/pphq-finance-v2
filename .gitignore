@@ -85,3 +85,11 @@ database.sqlite
 *.upload.tmp
 repair-db-channels.cjs
 uploads/
+
+# Archives & Bundled Deployment Files
+*.zip
+*.tar.gz
+app.cjs
+app.js
+server.js
+

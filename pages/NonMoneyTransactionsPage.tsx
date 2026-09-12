@@ -1,14 +1,16 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Transaction, TransactionType, TransactionNature, Role } from '../types';
-import { PencilIcon, TrashIcon, GiftIcon, BranchIcon, CameraIcon, SearchIcon } from '../constants';
+import { PencilIcon, TrashIcon, GiftIcon, BranchIcon, CameraIcon, SearchIcon, ImageIcon } from '../constants';
 import { compressImage } from '../utils/imageUtils';
+import CameraCaptureModal from '../components/CameraCaptureModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const NonMoneyTransactionsPage = () => {
     const { transactions, allTransactions, addTransaction, updateTransaction, deleteTransaction, currentUser, branches, globalSearchTerm, settings, showConfirm, showAlert } = useAppContext();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -276,6 +278,11 @@ const NonMoneyTransactionsPage = () => {
         }
     };
 
+    const handleCameraCapture = (compressedDataUrl: string) => {
+        setAttachmentPreview(compressedDataUrl);
+        setFormState(prev => ({ ...prev, attachmentUrl: compressedDataUrl }));
+    };
+
     const openModal = (transaction: Transaction | null = null) => {
         setCurrentTransaction(transaction);
         setFormState({
@@ -489,29 +496,51 @@ const NonMoneyTransactionsPage = () => {
 
                             {/* Photo Section */}
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Foto Barang/Nota (Opsional)</label>
-                                <div className="mt-2 flex items-center gap-4">
-                                    <div 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-24 h-24 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-all overflow-hidden group"
-                                    >
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Foto Barang/Nota (Opsional) <span className="normal-case font-normal text-slate-400 text-[10px] ml-1">(max 200kb)</span></label>
+                                <div className="mt-2 space-y-4">
+                                    <div className="flex gap-3">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setIsCameraModalOpen(true)}
+                                            className="flex-1 py-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-100 transition-all"
+                                        >
+                                            <CameraIcon className="w-4 h-4" />
+                                            Buka Kamera
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="flex-1 py-3 bg-slate-50 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-100 transition-all"
+                                        >
+                                            <ImageIcon className="w-4 h-4" />
+                                            Pilih File
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="h-36 border-2 border-dashed border-slate-100 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group bg-slate-50/50">
                                         {attachmentPreview ? (
-                                            <img src={attachmentPreview} alt="Preview" className="w-full h-full object-cover" />
+                                            <img 
+                                                src={attachmentPreview} 
+                                                alt="Preview" 
+                                                className="w-full h-full object-contain cursor-pointer" 
+                                                onClick={() => { setSelectedImageUrl(attachmentPreview); setIsImageModalOpen(true); }} 
+                                            />
+                                        ) : isCompressing ? (
+                                            <div className="animate-spin h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full" />
                                         ) : (
-                                            <>
-                                                <CameraIcon className="w-6 h-6 text-slate-300 group-hover:text-emerald-500" />
-                                                <span className="text-[10px] font-bold text-slate-400 mt-1">Upload</span>
-                                            </>
+                                            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">Belum ada foto</p>
                                         )}
-                                    </div>
-                                    <div className="flex-grow space-y-2">
-                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" capture="environment" className="hidden" />
-                                        <p className="text-[10px] text-slate-400 font-medium">Klik kotak untuk foto barang/nota. Gambar dikompres (max 200kb).</p>
-                                        {isCompressing && <p className="text-[10px] text-emerald-600 font-bold animate-pulse">Sedang mengompres...</p>}
                                         {attachmentPreview && (
-                                            <button type="button" onClick={() => { setAttachmentPreview(null); setFormState(prev => ({ ...prev, attachmentUrl: '' })); }} className="text-[10px] font-bold text-red-500 hover:underline">Hapus Foto</button>
+                                            <button 
+                                                type="button"
+                                                onClick={() => { setAttachmentPreview(null); setFormState(prev => ({ ...prev, attachmentUrl: '' })); }} 
+                                                className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                            >
+                                                <TrashIcon className="w-4 h-4" />
+                                            </button>
                                         )}
                                     </div>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
                                 </div>
                             </div>
 
@@ -535,6 +564,13 @@ const NonMoneyTransactionsPage = () => {
                     </div>
                 </div>
             )}
+            {/* Camera Capture Modal */}
+            <CameraCaptureModal
+                isOpen={isCameraModalOpen}
+                onClose={() => setIsCameraModalOpen(false)}
+                onCapture={handleCameraCapture}
+            />
+
             {/* Export Modal */}
             {isExportModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[70] flex justify-center items-center p-4">
